@@ -71,7 +71,7 @@ def set_gpus(n=1):
 #if FLAGS.ngpus > 0:
     #set_gpus(FLAGS.ngpus)
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 def get_model(pretrained=False):
     map_location = None if FLAGS.ngpus > 0 else 'cpu'
