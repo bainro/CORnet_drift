@@ -23,8 +23,6 @@ normalize = torchvision.transforms.Normalize((0.5, 0.5, 0.5),
                                              (0.5, 0.5, 0.5))
 
 parser = argparse.ArgumentParser(description='CIFAR100 Training')
-parser.add_argument('--data_path', required=True,
-                    help='path to ImageNet folder that contains train and val folders')
 parser.add_argument('-o', '--output_path', default=None,
                     help='path for storing ')
 parser.add_argument('--model', choices=['Z', 'R', 'RT', 'S'], default='Z',
