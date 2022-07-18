@@ -269,8 +269,6 @@ class CIFAR100Train(object):
         if FLAGS.ngpus > 0:
             target = target.cuda(non_blocking=True)
         output = self.model(inp)
-        print(output.shape)
-        assert False, "did it on porpoise"
 
         record = {}
         loss = self.loss(output, target)
