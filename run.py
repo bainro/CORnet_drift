@@ -25,6 +25,8 @@ normalize = torchvision.transforms.Normalize((0.5, 0.5, 0.5),
 parser = argparse.ArgumentParser(description='CIFAR100 Training')
 parser.add_argument('-o', '--output_path', default=None,
                     help='path for storing ')
+parser.add_argument('--dropout', action='store_true',
+                    help='whether to add dropout to all layers or not')
 parser.add_argument('--model', choices=['Z', 'R', 'RT', 'S'], default='Z',
                     help='which model to train')
 parser.add_argument('--times', default=5, type=int,
@@ -71,7 +73,7 @@ def set_gpus(n=1):
 #if FLAGS.ngpus > 0:
     #set_gpus(FLAGS.ngpus)
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+print("111111", FLAGS.dropout); assert False
 
 def get_model(pretrained=False):
     map_location = None if FLAGS.ngpus > 0 else 'cpu'
