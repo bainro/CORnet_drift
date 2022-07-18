@@ -15,9 +15,6 @@ import cornet
 from PIL import Image
 Image.warnings.simplefilter('ignore')
 
-### temp hack for rob's personal pc
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
 np.random.seed(0)
 torch.manual_seed(0)
 
@@ -71,8 +68,8 @@ def set_gpus(n=1):
         [str(i) for i in gpus['index'].iloc[:n]])
 
 
-if FLAGS.ngpus > 0:
-    set_gpus(FLAGS.ngpus)
+#if FLAGS.ngpus > 0:
+    #set_gpus(FLAGS.ngpus)
 
 
 def get_model(pretrained=False):
