@@ -28,7 +28,7 @@ def get_model(model_letter, pretrained=False, map_location=None, **kwargs):
         url = f'https://s3.amazonaws.com/cornet-models/cornet_{model_letter.lower()}-{model_hash}.pth'
         ckpt_data = torch.utils.model_zoo.load_url(url, map_location=map_location)
         # removing the last layer's weights since they're for ImageNet classes, not CIFAR100
-        dir(ckpt_data)
+        print(dir(ckpt_data));assert False
         mod_weights = removekey(ckpt_data['model'], ['module.decoder.linear.weight', 'module.decoder.linear.bias'])
         model.load_state_dict(mod_weights['state_dict'], strict=False)
     return model
