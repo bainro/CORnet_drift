@@ -24,7 +24,7 @@ def get_model(model_letter, pretrained=False, map_location=None, **kwargs):
 
 
 def cornet_z(pretrained=False, map_location=None, num_classes=1000):
-    return get_model('z', pretrained=pretrained, map_location=map_location, num_classes=1000)
+    return get_model('z', pretrained=pretrained, map_location=map_location, num_classes=num_classes)
 
 
 def cornet_r(pretrained=False, map_location=None, times=5):
