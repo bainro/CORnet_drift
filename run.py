@@ -15,6 +15,9 @@ import cornet
 from PIL import Image
 Image.warnings.simplefilter('ignore')
 
+### temp hack for rob's personal pc
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 np.random.seed(0)
 torch.manual_seed(0)
 
