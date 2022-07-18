@@ -327,7 +327,7 @@ class CIFAR100Val(object):
                 record['top1'] += p1[0]
 
         num_test_imgs = len(self.data_loader.dataset)
-        assert num_test_imgs == 10000, "something went oopsies :("
+        assert num_test_imgs == 10000, f'CIFAR100 should have 10,000 test images, not {num_test_imgs}'
         for key in record:
             record[key] /= num_test_imgs
         record['dur'] = (time.time() - start) / len(self.data_loader)
