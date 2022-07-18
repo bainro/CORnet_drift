@@ -315,7 +315,7 @@ class CIFAR100Val(object):
     def __call__(self):
         self.model.eval()
         start = time.time()
-        record = {'loss': 0, 'top1': 0, 'top5': 0}
+        record = {'loss': 0, 'top1': 0}
         with torch.no_grad():
             for (inp, target) in tqdm.tqdm(self.data_loader, desc=self.name):
                 if FLAGS.ngpus > 0:
