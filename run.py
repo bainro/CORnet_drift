@@ -72,10 +72,9 @@ def set_gpus(n=1):
 
 #if FLAGS.ngpus > 0:
     #set_gpus(FLAGS.ngpus)
+  
 
-print("111111", FLAGS.dropout); assert False
-
-def get_model(pretrained=False):
+def get_model(pretrained=True):
     map_location = None if FLAGS.ngpus > 0 else 'cpu'
     model = getattr(cornet, f'cornet_{FLAGS.model.lower()}')
     if FLAGS.model.lower() == 'r':
