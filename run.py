@@ -39,7 +39,7 @@ parser.add_argument('--batch_size', default=128, type=int,
                     help='mini-batch size')
 parser.add_argument('--lr', '--learning_rate', default=1e-1, type=float,
                     help='initial learning rate')
-parser.add_argument('--step_size', default=10, type=int,
+parser.add_argument('--step_size', default=20, type=int,
                     help='after how many epochs learning rate should be decreased 10x')
 parser.add_argument('--momentum', default=.9, type=float, help='momentum')
 parser.add_argument('--weight_decay', default=1e-4, type=float,
