@@ -163,7 +163,7 @@ def train(restore_path=None,  # useful when you want to restart training
             if epoch < FLAGS.epochs:
                 frac_epoch = (global_step + 1) / len(trainer.data_loader)
                 record = trainer(frac_epoch, *data)
-                record['data_load_dur'] = data_load_time
+                # record['data_load_dur'] = data_load_time
                 results = {'meta': {'step_in_epoch': step + 1,
                                     'epoch': frac_epoch,
                                     'wall_time': time.time()}
