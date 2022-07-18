@@ -27,10 +27,11 @@ class Identity(nn.Module):
 
 class CORblock_Z(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, dropout=True):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
                               stride=stride, padding=kernel_size // 2)
+        self.dropout = nn.Dropout(p=0.1, inplace=True)
         self.nonlin = nn.ReLU(inplace=True)
         self.pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.output = Identity()  # for an easy access to this block's output
