@@ -37,7 +37,7 @@ parser.add_argument('--epochs', default=1, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--batch_size', default=128, type=int,
                     help='mini-batch size')
-parser.add_argument('--lr', '--learning_rate', default=1e-3, type=float,
+parser.add_argument('--lr', '--learning_rate', default=1e-1, type=float,
                     help='initial learning rate')
 parser.add_argument('--step_size', default=10, type=int,
                     help='after how many epochs learning rate should be decreased 10x')
