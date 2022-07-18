@@ -273,9 +273,8 @@ class CIFAR100Train(object):
         record = {}
         loss = self.loss(output, target)
         record['loss'] = loss.item()
-        record['top1'], record['top5'] = accuracy(output, target, topk=(1, 5))
+        record['top1'] = accuracy(output, target)
         record['top1'] /= len(output)
-        record['top5'] /= len(output)
         record['learning_rate'] = self.lr.get_lr()[0]
 
         self.optimizer.zero_grad()
@@ -324,12 +323,13 @@ class CIFAR100Val(object):
                 output = self.model(inp)
 
                 record['loss'] += self.loss(output, target).item()
-                p1, p5 = accuracy(output, target, topk=(1, 5))
+                p1 = accuracy(output, target)
                 record['top1'] += p1
-                record['top5'] += p5
 
+        num_test_imgs = len(self.data_loader.dataset)
+        assert num_test_imgs == 10000, "something went oopsies :("
         for key in record:
-            record[key] /= len(self.data_loader.dataset.samples)
+            record[key] /= num_test_imgs
         record['dur'] = (time.time() - start) / len(self.data_loader)
 
         return record
