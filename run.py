@@ -19,8 +19,8 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 torch.backends.cudnn.benchmark = True
-normalize = torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                             std=[0.229, 0.224, 0.225])
+normalize = torchvision.transforms.Normalize((0.5, 0.5, 0.5), 
+                                             (0.5, 0.5, 0.5))
 
 parser = argparse.ArgumentParser(description='ImageNet Training')
 parser.add_argument('--data_path', required=True,
