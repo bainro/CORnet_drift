@@ -253,7 +253,7 @@ class CIFAR100Train(object):
                         torchvision.transforms.ToTensor(),
                         normalize,
                     ])
-        dataset = torchvision.datasets.CIFAR10(root='./cifar100', train=True,
+        dataset = torchvision.datasets.CIFAR100(root='./cifar100', train=True,
                                         download=True, transform=transform)
         data_loader = torch.utils.data.DataLoader(dataset,
                                                   batch_size=FLAGS.batch_size,
@@ -303,7 +303,7 @@ class CIFAR100Val(object):
                         torchvision.transforms.ToTensor(),
                         normalize,
                     ])
-        dataset = torchvision.datasets.CIFAR10(root='./cifar100', train=False,
+        dataset = torchvision.datasets.CIFAR100(root='./cifar100', train=False,
                                         download=True, transform=transform)
         data_loader = torch.utils.data.DataLoader(dataset,
                                                   batch_size=FLAGS.batch_size,
