@@ -22,7 +22,7 @@ torch.backends.cudnn.benchmark = True
 normalize = torchvision.transforms.Normalize((0.5, 0.5, 0.5), 
                                              (0.5, 0.5, 0.5))
 
-parser = argparse.ArgumentParser(description='ImageNet Training')
+parser = argparse.ArgumentParser(description='CIFAR100 Training')
 parser.add_argument('--data_path', required=True,
                     help='path to ImageNet folder that contains train and val folders')
 parser.add_argument('-o', '--output_path', default=None,
@@ -35,9 +35,9 @@ parser.add_argument('--ngpus', default=0, type=int,
                     help='number of GPUs to use; 0 if you want to run on CPU')
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help='number of data loading workers')
-parser.add_argument('--epochs', default=20, type=int,
+parser.add_argument('--epochs', default=1, type=int,
                     help='number of total epochs to run')
-parser.add_argument('--batch_size', default=256, type=int,
+parser.add_argument('--batch_size', default=128, type=int,
                     help='mini-batch size')
 parser.add_argument('--lr', '--learning_rate', default=.1, type=float,
                     help='initial learning rate')
@@ -97,8 +97,8 @@ def train(restore_path=None,  # useful when you want to restart training
           ):
 
     model = get_model()
-    trainer = ImageNetTrain(model)
-    validator = ImageNetVal(model)
+    trainer = CIFAR100Train(model)
+    validator = CIFAR100Val(model)
 
     start_epoch = 0
     if restore_path is not None:
@@ -177,7 +177,7 @@ def train(restore_path=None,  # useful when you want to restart training
             data_load_start = time.time()
 
 
-def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=224):
+def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=32):
     """
     Suitable for small image sets. If you have thousands of images or it is
     taking too long to extract features, consider using
@@ -233,7 +233,7 @@ def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=224):
         np.save(os.path.join(FLAGS.output_path, fname), model_feats)
 
 
-class ImageNetTrain(object):
+class CIFAR100Train(object):
 
     def __init__(self, model):
         self.name = 'train'
@@ -249,14 +249,14 @@ class ImageNetTrain(object):
             self.loss = self.loss.cuda()
 
     def data(self):
-        dataset = torchvision.datasets.ImageFolder(
-            os.path.join(FLAGS.data_path, 'train'),
-            torchvision.transforms.Compose([
-                torchvision.transforms.RandomResizedCrop(224),
-                torchvision.transforms.RandomHorizontalFlip(),
-                torchvision.transforms.ToTensor(),
-                normalize,
-            ]))
+        transform = torchvision.transforms.Compose([
+                        torchvision.transforms.RandomResizedCrop(32),
+                        torchvision.transforms.RandomHorizontalFlip(),
+                        torchvision.transforms.ToTensor(),
+                        normalize,
+                    ])
+        dataset = torchvision.datasets.CIFAR10(root='./cifar100', train=True,
+                                        download=True, transform=transform)
         data_loader = torch.utils.data.DataLoader(dataset,
                                                   batch_size=FLAGS.batch_size,
                                                   shuffle=True,
@@ -288,7 +288,7 @@ class ImageNetTrain(object):
         return record
 
 
-class ImageNetVal(object):
+class CIFAR100Val(object):
 
     def __init__(self, model):
         self.name = 'val'
@@ -299,14 +299,14 @@ class ImageNetVal(object):
             self.loss = self.loss.cuda()
 
     def data(self):
-        dataset = torchvision.datasets.ImageFolder(
-            os.path.join(FLAGS.data_path, 'val_in_folders'),
-            torchvision.transforms.Compose([
-                torchvision.transforms.Resize(256),
-                torchvision.transforms.CenterCrop(224),
-                torchvision.transforms.ToTensor(),
-                normalize,
-            ]))
+        transform = torchvision.transforms.Compose([
+                        torchvision.transforms.Resize(36),
+                        torchvision.transforms.CenterCrop(32),
+                        torchvision.transforms.ToTensor(),
+                        normalize,
+                    ])
+        dataset = torchvision.datasets.CIFAR10(root='./cifar100', train=False,
+                                        download=True, transform=transform)
         data_loader = torch.utils.data.DataLoader(dataset,
                                                   batch_size=FLAGS.batch_size,
                                                   shuffle=False,
