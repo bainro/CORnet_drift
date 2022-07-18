@@ -273,7 +273,7 @@ class CIFAR100Train(object):
         record = {}
         loss = self.loss(output, target)
         record['loss'] = loss.item()
-        record['top1'] = accuracy(output, target)
+        record['top1'] = accuracy(output, target)[0]
         record['top1'] /= len(output)
         record['learning_rate'] = self.lr.get_lr()[0]
 
@@ -324,7 +324,7 @@ class CIFAR100Val(object):
 
                 record['loss'] += self.loss(output, target).item()
                 p1 = accuracy(output, target)
-                record['top1'] += p1
+                record['top1'] += p1[0]
 
         num_test_imgs = len(self.data_loader.dataset)
         assert num_test_imgs == 10000, "something went oopsies :("
