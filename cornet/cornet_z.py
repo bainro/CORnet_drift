@@ -38,6 +38,7 @@ class CORblock_Z(nn.Module):
 
     def forward(self, inp):
         x = self.conv(inp)
+        x = self.dropout(x)
         x = self.nonlin(x)
         x = self.pool(x)
         x = self.output(x)  # for an easy access to this block's output
