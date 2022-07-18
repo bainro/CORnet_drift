@@ -23,7 +23,7 @@ def get_model(model_letter, pretrained=False, map_location=None, **kwargs):
     return model
 
 
-def cornet_z(pretrained=False, map_location=None, num_classes=1000):
+def cornet_z(pretrained=False, map_location=None, num_classes=100):
     return get_model('z', pretrained=pretrained, map_location=map_location, num_classes=num_classes)
 
 
