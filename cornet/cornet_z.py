@@ -27,10 +27,11 @@ class Identity(nn.Module):
 
 class CORblock_Z(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, dropout=True):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, dropout=False):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
                               stride=stride, padding=kernel_size // 2)
+        self.is_dropout = dropout
         self.dropout = nn.Dropout(p=0.1, inplace=True)
         self.nonlin = nn.ReLU(inplace=True)
         self.pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -38,19 +39,20 @@ class CORblock_Z(nn.Module):
 
     def forward(self, inp):
         x = self.conv(inp)
-        x = self.dropout(x)
+        if self.is_dropout:
+            x = self.dropout(x)
         x = self.nonlin(x)
         x = self.pool(x)
         x = self.output(x)  # for an easy access to this block's output
         return x
 
 
-def CORnet_Z(num_classes):
+def CORnet_Z(num_classes, dropout):
     model = nn.Sequential(OrderedDict([
-        ('V1', CORblock_Z(3, 64, kernel_size=7, stride=2)),
-        ('V2', CORblock_Z(64, 128)),
-        ('V4', CORblock_Z(128, 256)),
-        ('IT', CORblock_Z(256, 512)),
+        ('V1', CORblock_Z(3, 64, kernel_size=7, stride=2, dropout=dropout)),
+        ('V2', CORblock_Z(64, 128), dropout=dropout),
+        ('V4', CORblock_Z(128, 256), dropout=dropout),
+        ('IT', CORblock_Z(256, 512), dropout=dropout),
         ('decoder', nn.Sequential(OrderedDict([
             ('avgpool', nn.AdaptiveAvgPool2d(1)),
             ('flatten', Flatten()),
