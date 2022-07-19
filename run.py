@@ -80,7 +80,7 @@ def get_model(pretrained=False):
     if FLAGS.model.lower() == 'r':
         model = model(pretrained=pretrained, map_location=map_location, times=FLAGS.times)
     else:
-        model = model(pretrained=pretrained, map_location=map_location)
+        model = model(pretrained=pretrained, map_location=map_location, dropout=FLAGS.dropout)
 
     if FLAGS.ngpus == 0:
         model = model.module  # remove DataParallel
