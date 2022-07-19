@@ -33,8 +33,8 @@ def get_model(model_letter, pretrained=False, map_location=None, **kwargs):
     return model
 
 
-def cornet_z(pretrained=False, map_location=None, num_classes=100):
-    return get_model('z', pretrained=pretrained, map_location=map_location, num_classes=num_classes)
+def cornet_z(pretrained=False, map_location=None, num_classes=100, dropout=False):
+    return get_model('z', pretrained=pretrained, map_location=map_location, num_classes=num_classes, dropout=dropout)
 
 
 def cornet_r(pretrained=False, map_location=None, times=5):
@@ -45,5 +45,5 @@ def cornet_rt(pretrained=False, map_location=None, times=5):
     return get_model('rt', pretrained=pretrained, map_location=map_location, times=times)
 
 
-def cornet_s(pretrained=False, map_location=None, num_classes=100):
-    return get_model('s', pretrained=pretrained, map_location=map_location, num_classes=num_classes)
+def cornet_s(pretrained=False, map_location=None, num_classes=100, dropout=False):
+    return get_model('s', pretrained=pretrained, map_location=map_location, num_classes=num_classes, dropout=dropout)
