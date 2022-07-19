@@ -50,9 +50,9 @@ class CORblock_Z(nn.Module):
 def CORnet_Z(num_classes, dropout):
     model = nn.Sequential(OrderedDict([
         ('V1', CORblock_Z(3, 64, kernel_size=7, stride=2, dropout=dropout)),
-        ('V2', CORblock_Z(64, 128), dropout=dropout),
-        ('V4', CORblock_Z(128, 256), dropout=dropout),
-        ('IT', CORblock_Z(256, 512), dropout=dropout),
+        ('V2', CORblock_Z(64, 128, dropout=dropout)),
+        ('V4', CORblock_Z(128, 256, dropout=dropout)),
+        ('IT', CORblock_Z(256, 512, dropout=dropout)),
         ('decoder', nn.Sequential(OrderedDict([
             ('avgpool', nn.AdaptiveAvgPool2d(1)),
             ('flatten', Flatten()),
