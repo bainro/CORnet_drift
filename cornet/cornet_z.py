@@ -34,7 +34,7 @@ class CORblock_Z(nn.Module):
         self.is_dropout = dropout
         self.dropout = nn.Dropout(p=0.1, inplace=True)
         self.nonlin = nn.ReLU(inplace=True)
-        self.pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.pool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
         self.output = Identity()  # for an easy access to this block's output
 
     def forward(self, inp):
@@ -49,7 +49,7 @@ class CORblock_Z(nn.Module):
 
 def CORnet_Z(num_classes, dropout):
     model = nn.Sequential(OrderedDict([
-        ('V1', CORblock_Z(3, 64, kernel_size=7, stride=2, dropout=dropout)),
+        ('V1', CORblock_Z(3, 64, kernel_size=5, stride=1, dropout=dropout)),
         ('V2', CORblock_Z(64, 128, dropout=dropout)),
         ('V4', CORblock_Z(128, 256, dropout=dropout)),
         ('IT', CORblock_Z(256, 512, dropout=dropout)),
