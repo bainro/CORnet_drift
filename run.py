@@ -160,6 +160,8 @@ def train_movie_test(num_epochs=10,
                      restore_path=None): # where to load the pretrained model from
     """
     Train, movie, test loop until num_epochs of train split has been trained on.
+    Sample from each CORnet layer every 1/10th training epoch using movie split.
+    Then evaluate the model on test split to see if behavior changes over time.
     """
     model = get_model()
     trainer = CIFAR100Train(model)
@@ -169,18 +171,13 @@ def train_movie_test(num_epochs=10,
     assert restore_path is not None, "set restore_path"
     
     ckpt_data = torch.load(restore_path)
-    start_epoch = ckpt_data['epoch']
     model.load_state_dict(ckpt_data['state_dict'])
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
 
-    ### train on train set for 1/10th of an epoch. LR = 1e-3
+    """ learn on train set for 1/10th of an epoch. """
 
-    nsteps = len(trainer.data_loader)
-    if save_train_epochs is not None:
-        save_train_steps = (np.arange(0, FLAGS.epochs + 1,
-                                      save_train_epochs) * nsteps).astype(int)
-
-    for epoch in range(0, FLAGS.epochs + 1):
+    ### need to set LR = 1e-3
+    for epoch in range(0, num_epochs):
         for step, data in enumerate(trainer.data_loader):
             global_step = epoch * len(trainer.data_loader) + step
 
@@ -191,7 +188,7 @@ def train_movie_test(num_epochs=10,
                 frac_epoch = (global_step + 1) / len(trainer.data_loader)
                 _record = trainer(frac_epoch, *data)
 
-    # train on movie for (10 repeats or just once) while sampling layers' neurons
+    """ train on movie for (10 repeats or just once) while sampling layers' neurons """
     
     ### have to modify to accept multiple layers/sublayers
     # layers (choose from: V1, V2, V4, IT, decoder)
@@ -217,10 +214,12 @@ def train_movie_test(num_epochs=10,
         model_feats.append(_model_feats[-1])
         model_feats = np.concatenate(model_feats)
 
-    # evaluate test set accuracy without learning/training
+    """ evaluate test set accuracy without learning """
     results[validator.name] = validator()
     
-    # after 10 training epochs save a pandas dataframe
+    """ after num_epochs of training output a pandas dataframe """
+    
+    ### ... yet to implement
 
     print("\n\n", "train_movie_test() done!!!", "\n\n")
         
