@@ -178,25 +178,22 @@ def train(restore_path=None,  # useful when you want to restart training
             data_load_start = time.time()
 
 
+### have to modify to accept multiple layers/sublayers
+# should probably gut and pull into train_movie_test()
 def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=32):
     """
-    Suitable for small image sets. If you have thousands of images or it is
-    taking too long to extract features, consider using
-    `torchvision.datasets.ImageFolder`, using `ImageNetVal` as an example.
-
     Kwargs:
         - layers (choose from: V1, V2, V4, IT, decoder)
         - sublayer (e.g., output, conv1, avgpool)
         - time_step (which time step to use for storing features)
         - imsize (resize image to how many pixels, default: 224)
     """
-    model = get_model(pretrained=True)
+    model = get_model(pretrained=False)
     transform = torchvision.transforms.Compose([
                     torchvision.transforms.Resize((imsize, imsize)),
                     torchvision.transforms.ToTensor(),
                     normalize,
                 ])
-    model.eval()
 
     def _store_feats(layer, inp, output):
         """An ugly but effective way of accessing intermediate model features
@@ -212,21 +209,31 @@ def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=32):
     model_layer.register_forward_hook(_store_feats)
 
     model_feats = []
-    with torch.no_grad():
-        model_feats = []
-        fnames = sorted(glob.glob(os.path.join(FLAGS.data_path, '*.*')))
-        if len(fnames) == 0:
-            raise FileNotFoundError(f'No files found in {FLAGS.data_path}')
+    
+    model.train()
+    for step, data in enumerate(validator.movie_loader):
+        record = {'loss': 0, 'top1': 0}
+            for (inp, target) in tqdm.tqdm(self.test_loader, desc=self.name):
+                if FLAGS.ngpus > 0:
+                    target = target.cuda(non_blocking=True)
+                output = self.model(inp)
+
+        num_test_imgs = len(self.test_loader.dataset)
+        for key in record:
+            record[key] /= num_test_imgs
+      
+        model_feats = []        
         for fname in tqdm.tqdm(fnames):
             try:
                 im = Image.open(fname).convert('RGB')
             except:
                 raise FileNotFoundError(f'Unable to load {fname}')
             im = transform(im)
-            im = im.unsqueeze(0)  # adding extra dimension for batch size of 1
+            im = im.unsqueeze(0) # adding extra dimension for batch size of 1
             _model_feats = []
             model(im)
-            model_feats.append(_model_feats[time_step])
+            # hardcoded time_step to last, should always be 0 for Z?
+            model_feats.append(_model_feats[-1])
         model_feats = np.concatenate(model_feats)
 
     if FLAGS.output_path is not None:
@@ -241,7 +248,7 @@ def train_movie_test(num_epochs=10,
 
   model = get_model()
   trainer = CIFAR100Train(model)
-  validator = CIFAR100Val(model)
+  validator = CIFAR100Val(model, movie=True)
 
   start_epoch = 0
   if restore_path is not None:
@@ -271,9 +278,7 @@ def train_movie_test(num_epochs=10,
                       'wall_time': time.time()}
              }
   for epoch in tqdm.trange(0, FLAGS.epochs + 1, initial=start_epoch, desc='epoch'):
-      data_load_start = np.nan
       for step, data in enumerate(tqdm.tqdm(trainer.data_loader, desc=trainer.name)):
-          data_load_time = time.time() - data_load_start
           global_step = epoch * len(trainer.data_loader) + step
 
           if save_val_steps is not None:
@@ -303,14 +308,9 @@ def train_movie_test(num_epochs=10,
                       torch.save(ckpt_data, os.path.join(FLAGS.output_path,
                                                          f'epoch_{epoch:02d}.pth.tar'))
 
-          else:
-              if len(results) > 1:
-                  pprint.pprint(results)
-
           if epoch < FLAGS.epochs:
               frac_epoch = (global_step + 1) / len(trainer.data_loader)
               record = trainer(frac_epoch, *data)
-              # record['data_load_dur'] = data_load_time
               results = {'meta': {'step_in_epoch': step + 1,
                                   'epoch': frac_epoch,
                                   'wall_time': time.time()}
@@ -318,8 +318,6 @@ def train_movie_test(num_epochs=10,
               if save_train_steps is not None:
                   if step in save_train_steps:
                       results[trainer.name] = record
-
-          data_load_start = time.time()
 
   # train on movie for (10 repeats or just once) while sampling layers' neurons
 
@@ -384,9 +382,9 @@ class CIFAR100Train(object):
         return record
 
 
-class CIFAR100Val(object, movie=False):
+class CIFAR100Val(object):
 
-    def __init__(self, model):
+    def __init__(self, model, movie=False):
         self.name = 'val'
         self.model = model
         self.test_loader, self.movie_loader = self.data(movie)
