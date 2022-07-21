@@ -156,23 +156,22 @@ def train(restore_path=None,  # useful when you want to restart training
         
 
 def train_movie_test(num_epochs=10, 
-                     num_movie=1,
-                     restore_path=None,  # where to load the pretrained model from
-                     save_model_epochs=5)  # how often save model weigths
-
+                     num_movie=1, # how many times to sample from the movie split
+                     restore_path=None): # where to load the pretrained model from
+    """
+    Train, movie, test loop until num_epochs of train split has been trained on.
+    """
     model = get_model()
     trainer = CIFAR100Train(model)
     validator = CIFAR100Val(model, movie=True)
 
     start_epoch = 0
-    if restore_path is not None:
-        ckpt_data = torch.load(restore_path)
-        start_epoch = ckpt_data['epoch']
-        model.load_state_dict(ckpt_data['state_dict'])
-        trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
-
-    records = []
-    recent_time = time.time()
+    assert restore_path is not None, "set restore_path"
+    
+    ckpt_data = torch.load(restore_path)
+    start_epoch = ckpt_data['epoch']
+    model.load_state_dict(ckpt_data['state_dict'])
+    trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
 
     ### train on train set for 1/10th of an epoch. LR = 1e-3
 
@@ -180,58 +179,17 @@ def train_movie_test(num_epochs=10,
     if save_train_epochs is not None:
         save_train_steps = (np.arange(0, FLAGS.epochs + 1,
                                       save_train_epochs) * nsteps).astype(int)
-    if save_val_epochs is not None:
-        save_val_steps = (np.arange(0, FLAGS.epochs + 1,
-                                    save_val_epochs) * nsteps).astype(int)
-    if save_model_epochs is not None:
-        save_model_steps = (np.arange(0, FLAGS.epochs + 1,
-                                      save_model_epochs) * nsteps).astype(int)
 
-    results = {'meta': {'step_in_epoch': 0,
-                        'epoch': start_epoch,
-                        'wall_time': time.time()}
-               }
-    for epoch in tqdm.trange(0, FLAGS.epochs + 1, initial=start_epoch, desc='epoch'):
-        for step, data in enumerate(tqdm.tqdm(trainer.data_loader, desc=trainer.name)):
+    for epoch in range(0, FLAGS.epochs + 1):
+        for step, data in enumerate(trainer.data_loader):
             global_step = epoch * len(trainer.data_loader) + step
 
-            if save_val_steps is not None:
-                if global_step in save_val_steps:
-                    results[validator.name] = validator()
-                    trainer.model.train()
-
-            if FLAGS.output_path is not None:
-                records.append(results)
-                if len(results) > 1:
-                    pickle.dump(records, open(os.path.join(FLAGS.output_path, 'results.pkl'), 'wb'))
-
-                ckpt_data = {}
-                ckpt_data['flags'] = FLAGS.__dict__.copy()
-                ckpt_data['epoch'] = epoch
-                ckpt_data['state_dict'] = model.state_dict()
-                ckpt_data['optimizer'] = trainer.optimizer.state_dict()
-
-                if save_model_secs is not None:
-                    if time.time() - recent_time > save_model_secs:
-                        torch.save(ckpt_data, os.path.join(FLAGS.output_path,
-                                                           'latest_checkpoint.pth.tar'))
-                        recent_time = time.time()
-
-                if save_model_steps is not None:
-                    if global_step in save_model_steps:
-                        torch.save(ckpt_data, os.path.join(FLAGS.output_path,
-                                                           f'epoch_{epoch:02d}.pth.tar'))
+            ### want to only train on 1/10th, and pickup where left off
+            trainer.model.train()
 
             if epoch < FLAGS.epochs:
                 frac_epoch = (global_step + 1) / len(trainer.data_loader)
-                record = trainer(frac_epoch, *data)
-                results = {'meta': {'step_in_epoch': step + 1,
-                                    'epoch': frac_epoch,
-                                    'wall_time': time.time()}
-                           }
-                if save_train_steps is not None:
-                    if step in save_train_steps:
-                        results[trainer.name] = record
+                _record = trainer(frac_epoch, *data)
 
     # train on movie for (10 repeats or just once) while sampling layers' neurons
     
