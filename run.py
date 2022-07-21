@@ -8,6 +8,7 @@ import fire
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo
+from torch.utils.data.sampler import SubsetRandomSampler
 import torchvision
 
 import cornet
@@ -311,12 +312,12 @@ class CIFAR100Val(object, movie=False):
             torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-        test_dataset = datasets.CIFAR100(
+        test_dataset = torchvision.datasets.CIFAR100(
             root=data_dir, train=False,
             download=True, transform=transform,
         )
 
-        movie_dataset = datasets.CIFAR100(
+        movie_dataset = tochvision.datasets.CIFAR100(
             root=data_dir, train=False,
             download=True, transform=transform,
         )
