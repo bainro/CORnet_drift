@@ -234,6 +234,18 @@ def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=32):
         np.save(os.path.join(FLAGS.output_path, fname), model_feats)
 
 
+def train_movie_test(num_epochs=10, num_movie=1):
+  # train on train set for 1/10th of an epoch. LR = 1e-3
+
+  # train on movie for (10 repeats or just once) while sampling layers' neurons
+
+  # evaluate model without training for test set accuracy
+
+  # after 10 training epochs save a pandas dataframe
+  
+  pass
+        
+        
 class CIFAR100Train(object):
 
     def __init__(self, model):
