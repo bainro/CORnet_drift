@@ -315,7 +315,7 @@ class CIFAR100Val(object):
             download=True, transform=transform,
         )
 
-        num_test = len(train_dataset)
+        num_test = len(test_dataset)
         indices = list(range(num_test))
         split = int(np.floor(movie_size * num_test))
 
