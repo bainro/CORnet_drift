@@ -287,39 +287,70 @@ class CIFAR100Train(object):
         return record
 
 
-class CIFAR100Val(object):
+class CIFAR100Val(object, movie=False):
 
     def __init__(self, model):
         self.name = 'val'
         self.model = model
-        self.data_loader = self.data()
+        self.test_loader, self.movie_loader = self.data(movie)
         self.loss = nn.CrossEntropyLoss(size_average=False)
         if FLAGS.ngpus > 0:
             self.loss = self.loss.cuda()
 
-    def data(self):
-        transform = torchvision.transforms.Compose([
-                        torchvision.transforms.Resize(36),
-                        torchvision.transforms.CenterCrop(32),
-                        torchvision.transforms.ToTensor(),
-                        normalize,
-                    ])
-        dataset = torchvision.datasets.CIFAR100(root='./cifar100', train=False,
-                                        download=True, transform=transform)
-        data_loader = torch.utils.data.DataLoader(dataset,
-                                                  batch_size=FLAGS.batch_size,
-                                                  shuffle=False,
-                                                  num_workers=FLAGS.workers,
-                                                  pin_memory=True)
+    def data(self, movie):
+        # split test (10k) into test (8k) & movie (2k)
+        shuffle = True
+        movie_size = 0.2 if movie else 0.
+        random_seed = 42
+        data_dir = "./cifar100"
 
-        return data_loader
+        transform = torchvision.transforms.Compose([
+            # torchvision.transforms.Resize(36),
+            # torchvision.transforms.CenterCrop(32),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
+        test_dataset = datasets.CIFAR100(
+            root=data_dir, train=False,
+            download=True, transform=transform,
+        )
+
+        movie_dataset = datasets.CIFAR100(
+            root=data_dir, train=False,
+            download=True, transform=transform,
+        )
+
+        num_test = len(train_dataset)
+        indices = list(range(num_test))
+        split = int(np.floor(movie_size * num_test))
+
+        if shuffle:
+            np.random.seed(random_seed)
+            np.random.shuffle(indices)
+
+        test_idx, movie_idx = indices[split:], indices[:split]
+        test_sampler = SubsetRandomSampler(test_idx)
+        movie_sampler = SubsetRandomSampler(movie_idx)
+
+        test_loader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=FLAGS.batch_size, sampler=test_sampler,
+            shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
+        )
+        # Each forward pass recalc's dropout. Geometry did not use const mask across "movie" repeat
+        movie_loader = torch.utils.data.DataLoader(
+            movie_dataset, batch_size=FLAGS.batch_size, sampler=movie_sampler,
+            shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
+        )
+
+        return test_loader, movie_loader
 
     def __call__(self):
         self.model.eval()
         start = time.time()
         record = {'loss': 0, 'top1': 0}
         with torch.no_grad():
-            for (inp, target) in tqdm.tqdm(self.data_loader, desc=self.name):
+            for (inp, target) in tqdm.tqdm(self.test_loader, desc=self.name):
                 if FLAGS.ngpus > 0:
                     target = target.cuda(non_blocking=True)
                 output = self.model(inp)
@@ -328,11 +359,11 @@ class CIFAR100Val(object):
                 p1 = accuracy(output, target)
                 record['top1'] += p1[0]
 
-        num_test_imgs = len(self.data_loader.dataset)
-        assert num_test_imgs == 10000, f'CIFAR100 should have 10,000 test images, not {num_test_imgs}'
+        num_test_imgs = len(self.test_loader.dataset)
+        # assert num_test_imgs == 10000, f'CIFAR100 should have 10,000 test images, not {num_test_imgs}'
         for key in record:
             record[key] /= num_test_imgs
-        record['dur'] = (time.time() - start) / len(self.data_loader)
+        record['dur'] = (time.time() - start) / len(self.test_loader)
 
         return record
 
