@@ -167,12 +167,15 @@ def train_movie_test(num_epochs=10,
     trainer = CIFAR100Train(model)
     validator = CIFAR100Val(model, movie=True)
 
-    start_epoch = 0
-    assert restore_path is not None, "set restore_path"
-    
+    assert restore_path is not None, "set restore_path"    
     ckpt_data = torch.load(restore_path)
     model.load_state_dict(ckpt_data['state_dict'])
+    print(ckpt_data['optimizer']); exit()
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+    # optimizer.zero_grad()
+    # loss_fn(model(input), target).backward()
+    # optimizer.step()
 
     """ learn on train set for 1/10th of an epoch. """
 
