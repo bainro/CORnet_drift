@@ -50,29 +50,6 @@ parser.add_argument('--weight_decay', default=1e-4, type=float,
 
 
 FLAGS, FIRE_FLAGS = parser.parse_known_args()
-
-
-def set_gpus(n=1):
-    """
-    Finds all GPUs on the system and restricts to n of them that have the most
-    free memory.
-    """
-    gpus = subprocess.run(shlex.split(
-        'nvidia-smi --query-gpu=index,memory.free,memory.total --format=csv,nounits'), check=True, stdout=subprocess.PIPE).stdout
-    gpus = pandas.read_csv(io.BytesIO(gpus), sep=', ', engine='python')
-    gpus = gpus[gpus['memory.total [MiB]'] > 10000]  # only above 10 GB
-    if os.environ.get('CUDA_VISIBLE_DEVICES') is not None:
-        visible = [int(i)
-                   for i in os.environ['CUDA_VISIBLE_DEVICES'].split(',')]
-        gpus = gpus[gpus['index'].isin(visible)]
-    gpus = gpus.sort_values(by='memory.free [MiB]', ascending=False)
-    os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'  # making sure GPUs are numbered the same way as in nvidia_smi
-    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(
-        [str(i) for i in gpus['index'].iloc[:n]])
-
-
-#if FLAGS.ngpus > 0:
-    #set_gpus(FLAGS.ngpus)
   
 
 def get_model(pretrained=False):
@@ -176,24 +153,91 @@ def train(restore_path=None,  # useful when you want to restart training
                         results[trainer.name] = record
 
             data_load_start = time.time()
+        
 
+def train_movie_test(num_epochs=10, 
+                     num_movie=1,
+                     restore_path=None,  # where to load the pretrained model from
+                     save_model_epochs=5)  # how often save model weigths
 
-### have to modify to accept multiple layers/sublayers
-# should probably gut and pull into train_movie_test()
-def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=32):
-    """
-    Kwargs:
-        - layers (choose from: V1, V2, V4, IT, decoder)
-        - sublayer (e.g., output, conv1, avgpool)
-        - time_step (which time step to use for storing features)
-        - imsize (resize image to how many pixels, default: 224)
-    """
-    model = get_model(pretrained=False)
-    transform = torchvision.transforms.Compose([
-                    torchvision.transforms.Resize((imsize, imsize)),
-                    torchvision.transforms.ToTensor(),
-                    normalize,
-                ])
+    model = get_model()
+    trainer = CIFAR100Train(model)
+    validator = CIFAR100Val(model, movie=True)
+
+    start_epoch = 0
+    if restore_path is not None:
+        ckpt_data = torch.load(restore_path)
+        start_epoch = ckpt_data['epoch']
+        model.load_state_dict(ckpt_data['state_dict'])
+        trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
+
+    records = []
+    recent_time = time.time()
+
+    ### train on train set for 1/10th of an epoch. LR = 1e-3
+
+    nsteps = len(trainer.data_loader)
+    if save_train_epochs is not None:
+        save_train_steps = (np.arange(0, FLAGS.epochs + 1,
+                                      save_train_epochs) * nsteps).astype(int)
+    if save_val_epochs is not None:
+        save_val_steps = (np.arange(0, FLAGS.epochs + 1,
+                                    save_val_epochs) * nsteps).astype(int)
+    if save_model_epochs is not None:
+        save_model_steps = (np.arange(0, FLAGS.epochs + 1,
+                                      save_model_epochs) * nsteps).astype(int)
+
+    results = {'meta': {'step_in_epoch': 0,
+                        'epoch': start_epoch,
+                        'wall_time': time.time()}
+               }
+    for epoch in tqdm.trange(0, FLAGS.epochs + 1, initial=start_epoch, desc='epoch'):
+        for step, data in enumerate(tqdm.tqdm(trainer.data_loader, desc=trainer.name)):
+            global_step = epoch * len(trainer.data_loader) + step
+
+            if save_val_steps is not None:
+                if global_step in save_val_steps:
+                    results[validator.name] = validator()
+                    trainer.model.train()
+
+            if FLAGS.output_path is not None:
+                records.append(results)
+                if len(results) > 1:
+                    pickle.dump(records, open(os.path.join(FLAGS.output_path, 'results.pkl'), 'wb'))
+
+                ckpt_data = {}
+                ckpt_data['flags'] = FLAGS.__dict__.copy()
+                ckpt_data['epoch'] = epoch
+                ckpt_data['state_dict'] = model.state_dict()
+                ckpt_data['optimizer'] = trainer.optimizer.state_dict()
+
+                if save_model_secs is not None:
+                    if time.time() - recent_time > save_model_secs:
+                        torch.save(ckpt_data, os.path.join(FLAGS.output_path,
+                                                           'latest_checkpoint.pth.tar'))
+                        recent_time = time.time()
+
+                if save_model_steps is not None:
+                    if global_step in save_model_steps:
+                        torch.save(ckpt_data, os.path.join(FLAGS.output_path,
+                                                           f'epoch_{epoch:02d}.pth.tar'))
+
+            if epoch < FLAGS.epochs:
+                frac_epoch = (global_step + 1) / len(trainer.data_loader)
+                record = trainer(frac_epoch, *data)
+                results = {'meta': {'step_in_epoch': step + 1,
+                                    'epoch': frac_epoch,
+                                    'wall_time': time.time()}
+                           }
+                if save_train_steps is not None:
+                    if step in save_train_steps:
+                        results[trainer.name] = record
+
+    # train on movie for (10 repeats or just once) while sampling layers' neurons
+    
+    ### have to modify to accept multiple layers/sublayers
+    # layers (choose from: V1, V2, V4, IT, decoder)
+    # sublayer (e.g., output, conv1, avgpool)
 
     def _store_feats(layer, inp, output):
         """An ugly but effective way of accessing intermediate model features
@@ -201,131 +245,26 @@ def test(layer='decoder', sublayer='avgpool', time_step=0, imsize=32):
         output = output.cpu().numpy()
         _model_feats.append(np.reshape(output, (len(output), -1)))
 
-    try:
-        m = model.module
-    except:
-        m = model
-    model_layer = getattr(getattr(m, layer), sublayer)
+    model_layer = getattr(getattr(model, layer), sublayer)
     model_layer.register_forward_hook(_store_feats)
 
-    model_feats = []
-    
+    model_feats = []   
     model.train()
-    for step, data in enumerate(validator.movie_loader):
-        record = {'loss': 0, 'top1': 0}
-            for (inp, target) in tqdm.tqdm(self.test_loader, desc=self.name):
-                if FLAGS.ngpus > 0:
-                    target = target.cuda(non_blocking=True)
-                output = self.model(inp)
-
-        num_test_imgs = len(self.test_loader.dataset)
-        for key in record:
-            record[key] /= num_test_imgs
-      
-        model_feats = []        
-        for fname in tqdm.tqdm(fnames):
-            try:
-                im = Image.open(fname).convert('RGB')
-            except:
-                raise FileNotFoundError(f'Unable to load {fname}')
-            im = transform(im)
-            im = im.unsqueeze(0) # adding extra dimension for batch size of 1
-            _model_feats = []
-            model(im)
-            # hardcoded time_step to last, should always be 0 for Z?
-            model_feats.append(_model_feats[-1])
+    for (x, _target) in enumerate(validator.movie_loader):
+        if FLAGS.ngpus > 0:
+            target = target.cuda(non_blocking=True)
+        _model_feats = []
+        output = model(x)     
+        # hardcoded time_step to last, should always be 0 for Z?
+        model_feats.append(_model_feats[-1])
         model_feats = np.concatenate(model_feats)
 
-    if FLAGS.output_path is not None:
-        fname = f'CORnet-{FLAGS.model}_{layer}_{sublayer}_feats.npy'
-        np.save(os.path.join(FLAGS.output_path, fname), model_feats)
+    # evaluate test set accuracy without learning/training
+    results[validator.name] = validator()
+    
+    # after 10 training epochs save a pandas dataframe
 
-
-def train_movie_test(num_epochs=10, 
-                     num_movie=1,
-                     restore_path=None,  # where to load the pretrained model from
-                     save_model_epochs=5)  # how often save model weigths
-
-  model = get_model()
-  trainer = CIFAR100Train(model)
-  validator = CIFAR100Val(model, movie=True)
-
-  start_epoch = 0
-  if restore_path is not None:
-      ckpt_data = torch.load(restore_path)
-      start_epoch = ckpt_data['epoch']
-      model.load_state_dict(ckpt_data['state_dict'])
-      trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
-
-  records = []
-  recent_time = time.time()
-
-  ### train on train set for 1/10th of an epoch. LR = 1e-3
-  
-  nsteps = len(trainer.data_loader)
-  if save_train_epochs is not None:
-      save_train_steps = (np.arange(0, FLAGS.epochs + 1,
-                                    save_train_epochs) * nsteps).astype(int)
-  if save_val_epochs is not None:
-      save_val_steps = (np.arange(0, FLAGS.epochs + 1,
-                                  save_val_epochs) * nsteps).astype(int)
-  if save_model_epochs is not None:
-      save_model_steps = (np.arange(0, FLAGS.epochs + 1,
-                                    save_model_epochs) * nsteps).astype(int)
-
-  results = {'meta': {'step_in_epoch': 0,
-                      'epoch': start_epoch,
-                      'wall_time': time.time()}
-             }
-  for epoch in tqdm.trange(0, FLAGS.epochs + 1, initial=start_epoch, desc='epoch'):
-      for step, data in enumerate(tqdm.tqdm(trainer.data_loader, desc=trainer.name)):
-          global_step = epoch * len(trainer.data_loader) + step
-
-          if save_val_steps is not None:
-              if global_step in save_val_steps:
-                  results[validator.name] = validator()
-                  trainer.model.train()
-
-          if FLAGS.output_path is not None:
-              records.append(results)
-              if len(results) > 1:
-                  pickle.dump(records, open(os.path.join(FLAGS.output_path, 'results.pkl'), 'wb'))
-
-              ckpt_data = {}
-              ckpt_data['flags'] = FLAGS.__dict__.copy()
-              ckpt_data['epoch'] = epoch
-              ckpt_data['state_dict'] = model.state_dict()
-              ckpt_data['optimizer'] = trainer.optimizer.state_dict()
-
-              if save_model_secs is not None:
-                  if time.time() - recent_time > save_model_secs:
-                      torch.save(ckpt_data, os.path.join(FLAGS.output_path,
-                                                         'latest_checkpoint.pth.tar'))
-                      recent_time = time.time()
-
-              if save_model_steps is not None:
-                  if global_step in save_model_steps:
-                      torch.save(ckpt_data, os.path.join(FLAGS.output_path,
-                                                         f'epoch_{epoch:02d}.pth.tar'))
-
-          if epoch < FLAGS.epochs:
-              frac_epoch = (global_step + 1) / len(trainer.data_loader)
-              record = trainer(frac_epoch, *data)
-              results = {'meta': {'step_in_epoch': step + 1,
-                                  'epoch': frac_epoch,
-                                  'wall_time': time.time()}
-                         }
-              if save_train_steps is not None:
-                  if step in save_train_steps:
-                      results[trainer.name] = record
-
-  # train on movie for (10 repeats or just once) while sampling layers' neurons
-
-  # evaluate model without training for test set accuracy
-
-  # after 10 training epochs save a pandas dataframe
-  
-  pass
+    print("\n\n", "train_movie_test() done!!!", "\n\n")
         
         
 class CIFAR100Train(object):
