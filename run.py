@@ -310,7 +310,7 @@ class CIFAR100Val(object):
             download=True, transform=transform,
         )
 
-        movie_dataset = tochvision.datasets.CIFAR100(
+        movie_dataset = torchvision.datasets.CIFAR100(
             root=data_dir, train=False,
             download=True, transform=transform,
         )
