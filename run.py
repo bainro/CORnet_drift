@@ -177,7 +177,7 @@ def train_movie_test(num_epochs=10,
     a_tenth = len(trainer.data_loader) // 10
     # holds all samples from the model's layers when running on movie
     # gets saved to a pandas dataframe
-    model_feats = []
+    model_feats = None
 
     """ learn on train set for 1/10th of an epoch. """
     for epoch in range(0, num_epochs):
@@ -236,7 +236,10 @@ def train_movie_test(num_epochs=10,
                                 bs_flats = bs_flat
                             else:
                                 bs_flats = np.hstack((bs_flats, bs_flat))
-                        model_feats = np.vstack((model_feats, bs_flats))
+                        if type(bs_flats) == type(None):
+                            model_feats = bs_flats
+                        else:
+                            model_feats = np.vstack((model_feats, bs_flats))
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
                         loss.backward()
