@@ -338,7 +338,7 @@ class CIFAR100Val(object):
     def data(self, movie):
         # split test (10k) into test (9.8k) & movie (0.2k)
         shuffle = True
-        movie_size = 0.02 if movie else 0.
+        movie_size = 0.2 if movie else 0.
         random_seed = 42
         data_dir = "./cifar100"
 
