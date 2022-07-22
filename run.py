@@ -219,7 +219,8 @@ def train_movie_test(num_epochs=10,
    
                 for repeat in range(num_movies):
                     for (x, targets) in validator.movie_loader:
-                        _model_feats, bs_flats = [], [[]]
+                        _model_feats = []
+                        bs_flats = None
                         if FLAGS.ngpus > 0:
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
@@ -231,7 +232,10 @@ def train_movie_test(num_epochs=10,
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
                             bs_flat = np.vstack((bs_flat_1, bs_flat_2))
-                            bs_flats = np.hstack((bs_flats, bs_flat))
+                            if type(bs_flats) == type(None):
+                                bs_flats = bs_flat
+                            else:
+                                bs_flats = np.hstack((bs_flats, bs_flat))
                         model_feats = np.vstack((model_feats, bs_flats))
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
