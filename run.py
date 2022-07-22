@@ -177,8 +177,8 @@ def train_movie_test(num_epochs=10,
     # @TODO remove, only for debugging
     test_acc = validator()["top1"]
     print(f"test accuracy: {test_acc * 100:.1f}%")
-    print(f"number of test images: {len(validator.test_loader.dataset)}")
-    print(f"number of movie images: {len(validator.movie_loader.dataset)}")
+    print(f"number of test images: {len(validator.test_loader.num_images)}")
+    print(f"number of movie images: {len(validator.movie_loader.num_images)}")
     exit()
     
     a_tenth = len(trainer.data_loader) // 10
@@ -347,11 +347,14 @@ class CIFAR100Val(object):
             test_dataset, batch_size=FLAGS.batch_size, sampler=test_sampler,
             shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
         )
+        test_loader.num_images = len(test_idx)
+        
         # Each forward pass recalc's dropout. Geometry did not use const mask across "movie" repeat
         movie_loader = torch.utils.data.DataLoader(
             movie_dataset, batch_size=FLAGS.batch_size, sampler=movie_sampler,
             shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
         )
+        movie_loader.num_images = len(movie_idx)
 
         return test_loader, movie_loader
 
@@ -369,7 +372,7 @@ class CIFAR100Val(object):
                 p1 = accuracy(output, target)
                 record['top1'] += p1[0]
 
-        num_test_imgs = len(self.test_loader.dataset)
+        num_test_imgs = len(self.test_loader.num_images)
         # assert num_test_imgs == 10000, f'CIFAR100 should have 10,000 test images, not {num_test_imgs}'
         for key in record:
             record[key] /= num_test_imgs
