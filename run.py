@@ -235,10 +235,12 @@ def train_movie_test(num_epochs=10,
                                 bs_flats = bs_flat
                             else:
                                 bs_flats = np.hstack((bs_flats, bs_flat))
+                        """
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
                         else:
                             model_feats = np.vstack((model_feats, bs_flats))
+                        """
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
                         loss.backward()
@@ -246,7 +248,7 @@ def train_movie_test(num_epochs=10,
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
                     mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
-                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
+                    # np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
                     print(f"model_feats.shape: {model_feats.shape}")
                     del model_feats # hopefully freeing up memory quick enought for validator() below
                     # last ditch effort for garbage collection to get its shit together
