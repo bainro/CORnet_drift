@@ -185,9 +185,9 @@ def train_movie_test(num_epochs=10,
         for i, (x, targets) in enumerate(trainer.data_loader):
             model.train()
             if FLAGS.ngpus > 0:
-                target = target.cuda(non_blocking=True)
+                targets = targets.cuda(non_blocking=True)
             output = model(x)
-            loss = self.loss(output, target)
+            loss = self.loss(output, targets)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
