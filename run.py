@@ -166,7 +166,10 @@ def train_movie_test(num_epochs=10,
     model = get_model()
     trainer = CIFAR100Train(model)
     validator = CIFAR100Val(model, movie=True)
-
+    # @TODO remove, only for debugging
+    test_acc = validator()["top1"]
+    print(f"test accuracy: {test_acc * 100:.1f}%")
+    
     assert restore_path is not None, "set restore_path"    
     ckpt_data = torch.load(restore_path)
     model.load_state_dict(ckpt_data['state_dict'])
