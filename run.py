@@ -202,9 +202,8 @@ def train_movie_test(num_epochs=10,
                     output = output.detach().cpu().numpy()
                     print(f"sublayer: {sublayer}")
                     print(output.shape)
-                    print(output.sum(), "\n") 
-                    ### @TODO don't flatten since these are batches!
-                    _model_feats.append(np.reshape(output, (len(output), -1)))
+                    print(output.sum())
+                    _model_feats.append(output)
 
                 hook_handles = []
                 # grab the output of each layer's non-linearity (ie ReLU)
@@ -220,6 +219,8 @@ def train_movie_test(num_epochs=10,
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
                         ### @TODO replace with pandas dataframe construction.
+                        for tensor in _model_feats:
+                            print(f"tensor.shape: {tensor.shape}")
                         # This line currently blows up because of mismatched shapes
                         model_feats = np.concatenate(_model_feats)
                         loss = trainer.loss(output, targets)
