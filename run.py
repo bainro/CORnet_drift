@@ -200,9 +200,9 @@ def train_movie_test(num_epochs=10,
                 def _store_feats(sublayer, inp, output):
                     # An ugly but effective way of accessing intermediate model features
                     output = output.detach().cpu().numpy()
-                    print(f"sublayer: {sublayer}")
-                    print(output.shape)
-                    print(output.sum())
+                    # print(f"sublayer: {sublayer}")
+                    # print(output.shape)
+                    # print(output.sum())
                     _model_feats.append(output)
 
                 hook_handles = []
