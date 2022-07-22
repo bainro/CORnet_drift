@@ -192,7 +192,7 @@ def train_movie_test(num_epochs=10,
             loss.backward()
             trainer.optimizer.step()
             
-            if i % a_tenth == 0:
+            if i % a_tenth == 0 and i != 0:
                 """ train on movie for (10 repeats or just once) while sampling layers' neurons """
                 
                 # layers (choose from: V1, V2, V4, IT, decoder)
