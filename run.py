@@ -220,7 +220,7 @@ def train_movie_test(num_epochs=10,
                         output = model(x)     
                         print(f"_model_feats len: {len(_model_feats)}");print(f"_model_feats: {_model_feats}");exit()
                         # hardcoded time_step to last, should always be 0 for Z?
-                        model_feats = np.concatenate(_model_feats[-1])
+                        model_feats = np.concatenate(_model_feats)
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
                         loss.backward()
