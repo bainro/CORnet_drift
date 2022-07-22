@@ -313,8 +313,8 @@ class CIFAR100Val(object):
         data_dir = "./cifar100"
 
         transform = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(36),
-            torchvision.transforms.CenterCrop(32),
+            #torchvision.transforms.Resize(36),
+            #torchvision.transforms.CenterCrop(32),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
