@@ -156,7 +156,7 @@ def train(restore_path=None,  # useful when you want to restart training
         
 
 def train_movie_test(num_epochs=10, 
-                     num_movie=1, # how many times to sample from the movie split
+                     num_movies=1, # how many times to sample from the movie split
                      restore_path=None): # where to load the pretrained model from
     """
     Train, movie, test loop until num_epochs of train split has been trained on.
@@ -209,17 +209,18 @@ def train_movie_test(num_epochs=10,
                   hook_handle = model_layer.register_forward_hook(_store_feats)
                   hook_handles.append(hook_handle)
    
-                for (x, targets) in validator.movie_loader:
-                    _model_feats = []
-                    if FLAGS.ngpus > 0:
-                        targets = targets.cuda(non_blocking=True)
-                    output = model(x)     
-                    # hardcoded time_step to last, should always be 0 for Z?
-                    model_feats = np.concatenate(_model_feats[-1])
-                    loss = trainer.loss(output, targets)
-                    trainer.optimizer.zero_grad()
-                    loss.backward()
-                    trainer.optimizer.step()
+                for repeat in range(num_movies):
+                    for (x, targets) in validator.movie_loader:
+                        _model_feats = []
+                        if FLAGS.ngpus > 0:
+                            targets = targets.cuda(non_blocking=True)
+                        output = model(x)     
+                        # hardcoded time_step to last, should always be 0 for Z?
+                        model_feats = np.concatenate(_model_feats[-1])
+                        loss = trainer.loss(output, targets)
+                        trainer.optimizer.zero_grad()
+                        loss.backward()
+                        trainer.optimizer.step()
 
                 for handle in hook_handles:
                     handle.remove()
