@@ -263,6 +263,8 @@ def train_movie_test(num_epochs=10,
                         trainer.optimizer.step()
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
+                    print(f"i: {i}")
+                    print(f"a_tenth: {a_tenth}")
                     print(f"number of 10ths thru current epoch: {num_tenths_this_epoch}")
                     mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
                     # to avoid OOM issues!
