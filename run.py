@@ -219,7 +219,7 @@ def train_movie_test(num_epochs=10,
    
                 for repeat in range(num_movies):
                     for (x, targets) in validator.movie_loader:
-                        _model_feats, bs_flats = [], []
+                        _model_feats, bs_flats = [], [[]]
                         if FLAGS.ngpus > 0:
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
