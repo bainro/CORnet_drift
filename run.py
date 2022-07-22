@@ -203,7 +203,8 @@ def train_movie_test(num_epochs=10,
                     _model_feats.append(np.reshape(output, (len(output), -1)))
 
                 hook_handles = []
-                for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin" * 4]):
+                # grab the output of each layer's non-linearity (ie ReLU)
+                for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
                   model_layer = getattr(getattr(model.module, layer), sublayer)
                   hook_handle = model_layer.register_forward_hook(_store_feats)
                   hook_handles.append(hook_handle)
