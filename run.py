@@ -254,7 +254,8 @@ def train_movie_test(num_epochs=10,
                     del model_feats # hopefully freeing up memory quick enought for validator() below
                     # last ditch effort for garbage collection to get its shit together
                     from time import sleep
-                    sleep(1)
+                    print("SLEEPING! check the memory usage at this point via bash/top")
+                    sleep(30)
                     model_feats = None
                     """ evaluate test set accuracy without learning """
                     test_acc = validator()["top1"]
