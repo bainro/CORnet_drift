@@ -249,6 +249,9 @@ def train_movie_test(num_epochs=10,
                     np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
                     print(f"model_feats.shape: {model_feats.shape}")
                     del model_feats # hopefully freeing up memory quick enought for validator() below
+                    # last ditch effort for garbage collection to get its shit together
+                    from time import sleep
+                    sleep(1)
                     model_feats = None
                     """ evaluate test set accuracy without learning """
                     test_acc = validator()["top1"]
