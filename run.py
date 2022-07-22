@@ -371,11 +371,10 @@ class CIFAR100Val(object):
                 record['loss'] += self.loss(output, target).item()
                 p1 = accuracy(output, target)
                 record['top1'] += p1[0]
-
-        num_test_imgs = len(self.test_loader.num_images)
+                
         # assert num_test_imgs == 10000, f'CIFAR100 should have 10,000 test images, not {num_test_imgs}'
         for key in record:
-            record[key] /= num_test_imgs
+            record[key] /= self.test_loader.num_images
         record['dur'] = (time.time() - start) / len(self.test_loader)
 
         return record
