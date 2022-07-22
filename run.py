@@ -188,9 +188,9 @@ def train_movie_test(num_epochs=10,
                 targets = targets.cuda(non_blocking=True)
             output = model(x)
             loss = trainer.loss(output, targets)
-            self.optimizer.zero_grad()
+            trainer.optimizer.zero_grad()
             loss.backward()
-            self.optimizer.step()
+            trainer.optimizer.step()
             
             if i % a_tenth == 0:
                 """ train on movie for (10 repeats or just once) while sampling layers' neurons """
@@ -208,12 +208,18 @@ def train_movie_test(num_epochs=10,
                   hook_handle = model_layer.register_forward_hook(_store_feats)
                   hook_handles.append(hook_handle)
    
-                for (x, _target) in validator.movie_loader:
+                for (x, targets) in validator.movie_loader:
                     _model_feats = []
+                    if FLAGS.ngpus > 0:
+                        targets = targets.cuda(non_blocking=True)
                     output = model(x)     
                     # hardcoded time_step to last, should always be 0 for Z?
                     model_feats.append(_model_feats[-1])
                     model_feats = np.concatenate(model_feats)
+                    loss = trainer.loss(output, targets)
+                    trainer.optimizer.zero_grad()
+                    loss.backward()
+                    trainer.optimizer.step()
 
                 for handle in hook_handles:
                     handle.remove()
