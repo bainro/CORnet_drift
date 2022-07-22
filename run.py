@@ -170,56 +170,53 @@ def train_movie_test(num_epochs=10,
     assert restore_path is not None, "set restore_path"    
     ckpt_data = torch.load(restore_path)
     model.load_state_dict(ckpt_data['state_dict'])
+    # Goldilock's LR = 1e-3 (from results.pkl) not too small nor too large
     ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.001
-    print(ckpt_data['optimizer']['param_groups']);exit()
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
-    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-    # optimizer.zero_grad()
-    # loss_fn(model(input), target).backward()
-    # optimizer.step()
+    
+    a_tenth = len(trainer.data_loader) // 10
 
     """ learn on train set for 1/10th of an epoch. """
-
-    ### need to set LR = 1e-3
     for epoch in range(0, num_epochs):
-        for step, data in enumerate(trainer.data_loader):
-            global_step = epoch * len(trainer.data_loader) + step
+        # only train on 1/10th & start again where left off
+        for i, (x, targets) in enumerate(trainer.data_loader):
+            model.train()
+            output = model(x)
+            loss = self.loss(output, target)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            
+            if i % a_tenth == 0:
+                """ train on movie for (10 repeats or just once) while sampling layers' neurons """
+                
+                ### have to modify to accept multiple layers/sublayers
+                # layers (choose from: V1, V2, V4, IT, decoder)
+                # sublayer (e.g., output, conv1, avgpool)
+                def _store_feats(layer, inp, output):
+                    """An ugly but effective way of accessing intermediate model features
+                    """
+                    output = output.cpu().numpy()
+                    _model_feats.append(np.reshape(output, (len(output), -1)))
 
-            ### want to only train on 1/10th, and pickup where left off
-            trainer.model.train()
+                model_layer = getattr(getattr(model, layer), sublayer)
+                hook_handle = model_layer.register_forward_hook(_store_feats)
+                # doesn't belong here, but want to have the syntax around for a sec :)
+                hook_handle.remove()
 
-            if epoch < FLAGS.epochs:
-                frac_epoch = (global_step + 1) / len(trainer.data_loader)
-                _record = trainer(frac_epoch, *data)
+                model_feats = []   
+                model.train()
+                for (x, _target) in validator.movie_loader:
+                    if FLAGS.ngpus > 0:
+                        target = target.cuda(non_blocking=True)
+                    _model_feats = []
+                    output = model(x)     
+                    # hardcoded time_step to last, should always be 0 for Z?
+                    model_feats.append(_model_feats[-1])
+                    model_feats = np.concatenate(model_feats)
 
-    """ train on movie for (10 repeats or just once) while sampling layers' neurons """
-    
-    ### have to modify to accept multiple layers/sublayers
-    # layers (choose from: V1, V2, V4, IT, decoder)
-    # sublayer (e.g., output, conv1, avgpool)
-
-    def _store_feats(layer, inp, output):
-        """An ugly but effective way of accessing intermediate model features
-        """
-        output = output.cpu().numpy()
-        _model_feats.append(np.reshape(output, (len(output), -1)))
-
-    model_layer = getattr(getattr(model, layer), sublayer)
-    model_layer.register_forward_hook(_store_feats)
-
-    model_feats = []   
-    model.train()
-    for (x, _target) in enumerate(validator.movie_loader):
-        if FLAGS.ngpus > 0:
-            target = target.cuda(non_blocking=True)
-        _model_feats = []
-        output = model(x)     
-        # hardcoded time_step to last, should always be 0 for Z?
-        model_feats.append(_model_feats[-1])
-        model_feats = np.concatenate(model_feats)
-
-    """ evaluate test set accuracy without learning """
-    results[validator.name] = validator()
+                """ evaluate test set accuracy without learning """
+                results[validator.name] = validator()
     
     """ after num_epochs of training output a pandas dataframe """
     
