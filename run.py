@@ -170,8 +170,8 @@ def train_movie_test(num_epochs=10,
     assert restore_path is not None, "set restore_path"    
     ckpt_data = torch.load(restore_path)
     model.load_state_dict(ckpt_data['state_dict'])
-    ckpt_data['optimizer'][param_groups][0]['lr'] = 0.001
-    print(ckpt_data['optimizer'][param_groups]);exit()
+    ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.001
+    print(ckpt_data['optimizer']['param_groups']);exit()
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
     # optimizer.zero_grad()
