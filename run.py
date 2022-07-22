@@ -258,13 +258,11 @@ def train_movie_test(num_epochs=10,
                     sleep(10)
                     model_feats = None
                     # should be redundant, but just checking why validator() is causing OOM
-                    model.eval()
-                    with torch.no_grad():
-                        """ evaluate test set accuracy without learning """
-                        test_acc = validator()["top1"]
-                        print(f"test accuracy: {test_acc * 100:.1f}%")
-                    ### Rename file after saving to avoid OOM issues :(
-                    # os.rename # @TODO
+                """ evaluate test set accuracy without learning """
+                test_acc = validator()["top1"]
+                print(f"test accuracy: {test_acc * 100:.1f}%")
+                ### Rename file after saving to avoid OOM issues :(
+                # os.rename # @TODO
                 
                 for handle in hook_handles:
                     handle.remove()
