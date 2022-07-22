@@ -178,6 +178,7 @@ def train_movie_test(num_epochs=10,
     test_acc = validator()["top1"]
     print(f"test accuracy: {test_acc * 100:.1f}%")
     print(f"number of test images: {len(validator.test_loader.dataset)}")
+    print(f"number of movie images: {len(validator.movie_loader.dataset)}")
     exit()
     
     a_tenth = len(trainer.data_loader) // 10
