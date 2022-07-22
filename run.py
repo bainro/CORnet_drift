@@ -252,7 +252,7 @@ def train_movie_test(num_epochs=10,
                     """ evaluate test set accuracy without learning """
                     test_acc = validator()["top1"]
                     print(f"test accuracy: {test_acc * 100:.1f}%")
-                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_{test_acc * 100:.1f}"), model_feats)
+                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch+1}_test_{test_acc * 100:.1f}"), model_feats)
                     print(f"model_feats.shape: {model_feats.shape}")
                     # reset since just saved
                     model_feats = None
