@@ -231,12 +231,16 @@ def train_movie_test(num_epochs=10,
                             if len(sorted_model_feats) == 0:
                                 sorted_model_feats.append(tensor)
                             else:
-                                for i in range(len(sorted_model_feats) + 1):
+                                broke_out = False
+                                for i in range(len(sorted_model_feats)):
                                     num_conv_kernels = tensor.shape[1]
                                     i_num_conv_kernels = sorted_model_feats[i].shape[1]
                                     if num_conv_kernels <= i_num_conv_kernels:
+                                        sorted_model_feats.insert(i, tensor)
+                                        broke_out = True
                                         break
-                                sorted_model_feats.insert(i, tensor)
+                                if not broke_out:
+                                    sorted_model_feats.append(tensor)
                             
                         for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
                             # (batchsize, C * W * H)
