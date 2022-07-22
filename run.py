@@ -224,7 +224,21 @@ def train_movie_test(num_epochs=10,
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
                         # THIS IS NOT GENERAL! Specific to training on 2 GPUs
-                        for tensor_gpu1, tensor_gpu2 in pairwise(_model_feats):
+                        sorted_model_feats = []
+                        # hooks are async & can return in mixed order so must sort
+                        for tensor in _model_feats:
+                            # find idx into sorted_model_feats that tensor belongs
+                            if len(sorted_model_feats) == 0:
+                                sorted_model_feats[0] = tensor
+                            else:
+                                for i in range(len(sorted_model_feats)):
+                                    num_conv_kernels = t.shape[1]
+                                    i_num_conv_kernels = sorted_model_feats[i].shape[1]
+                                    if num_conv_kernels <= i_num_conv_kernels:
+                                        break
+                                sorted_model_feats.insert(i, tensor)
+                            
+                        for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
                             # (batchsize, C * W * H)
                             bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
