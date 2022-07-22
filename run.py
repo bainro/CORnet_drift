@@ -231,11 +231,12 @@ def train_movie_test(num_epochs=10,
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
                             bs_flat = np.vstack((bs_flat_1, bs_flat_2))
+                        """
                             if type(bs_flats) == type(None):
                                 bs_flats = bs_flat
                             else:
                                 bs_flats = np.hstack((bs_flats, bs_flat))
-                        """
+                        
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
                         else:
