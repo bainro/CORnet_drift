@@ -166,9 +166,6 @@ def train_movie_test(num_epochs=10,
     model = get_model()
     trainer = CIFAR100Train(model)
     validator = CIFAR100Val(model, movie=True)
-    # @TODO remove, only for debugging
-    test_acc = validator()["top1"]
-    print(f"test accuracy: {test_acc * 100:.1f}%")
     
     assert restore_path is not None, "set restore_path"    
     ckpt_data = torch.load(restore_path)
@@ -176,6 +173,11 @@ def train_movie_test(num_epochs=10,
     # Goldilock's LR = 1e-3 (from results.pkl) not too small nor too large
     # ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.001
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
+    
+    # @TODO remove, only for debugging
+    test_acc = validator()["top1"]
+    print(f"test accuracy: {test_acc * 100:.1f}%")
+    exit()
     
     a_tenth = len(trainer.data_loader) // 10
     # holds all samples from the model's layers when running on movie
