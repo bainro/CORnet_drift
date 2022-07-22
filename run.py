@@ -259,9 +259,10 @@ def train_movie_test(num_epochs=10,
                     model_feats = None
                     # should be redundant, but just checking why validator() is causing OOM
                     model.eval()
-                    """ evaluate test set accuracy without learning """
-                    test_acc = validator()["top1"]
-                    print(f"test accuracy: {test_acc * 100:.1f}%")
+                    with torch.no_grad():
+                        """ evaluate test set accuracy without learning """
+                        test_acc = validator()["top1"]
+                        print(f"test accuracy: {test_acc * 100:.1f}%")
                     ### Rename file after saving to avoid OOM issues :(
                     # os.rename # @TODO
                 
@@ -338,7 +339,7 @@ class CIFAR100Val(object):
     def data(self, movie):
         # split test (10k) into test (9.8k) & movie (0.2k)
         shuffle = True
-        movie_size = 0.2 if movie else 0.
+        movie_size = 0.02 if movie else 0.
         random_seed = 42
         data_dir = "./cifar100"
 
