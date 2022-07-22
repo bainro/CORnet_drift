@@ -218,6 +218,7 @@ def train_movie_test(num_epochs=10,
                         if FLAGS.ngpus > 0:
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
+                        print(f"_model_feats.shape: {_model_feats.shape}");exit()
                         # hardcoded time_step to last, should always be 0 for Z?
                         model_feats = np.concatenate(_model_feats[-1])
                         loss = trainer.loss(output, targets)
