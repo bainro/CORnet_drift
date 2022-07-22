@@ -255,7 +255,7 @@ def train_movie_test(num_epochs=10,
                     # last ditch effort for garbage collection to get its shit together
                     from time import sleep
                     print("SLEEPING! check the memory usage at this point via bash/top")
-                    sleep(30)
+                    sleep(10)
                     model_feats = None
                     # should be redundant, but just checking why validator() is causing OOM
                     model.eval()
