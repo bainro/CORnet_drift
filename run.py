@@ -247,6 +247,8 @@ def train_movie_test(num_epochs=10,
 
                 for handle in hook_handles:
                     handle.remove()
+                    
+                print(f"model_feats.shape: {model_feats}")
                 
                 """ evaluate test set accuracy without learning """
                 test_acc = validator()["top1"]
