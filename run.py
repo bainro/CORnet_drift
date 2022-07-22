@@ -248,6 +248,8 @@ def train_movie_test(num_epochs=10,
                 for handle in hook_handles:
                     handle.remove()
                     
+                # @TODO immediately remove! Debugging only
+                np.save(os.path.join(FLAGS.output_path, "samples"), model_feats)
                 print(f"model_feats.shape: {model_feats.shape}");exit()
                 
                 """ evaluate test set accuracy without learning """
