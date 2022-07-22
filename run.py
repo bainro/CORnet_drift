@@ -232,11 +232,11 @@ def train_movie_test(num_epochs=10,
                                 sorted_model_feats.append(tensor)
                             else:
                                 broke_out = False
-                                for i in range(len(sorted_model_feats)):
+                                for j in range(len(sorted_model_feats)):
                                     num_conv_kernels = tensor.shape[1]
-                                    i_num_conv_kernels = sorted_model_feats[i].shape[1]
-                                    if num_conv_kernels <= i_num_conv_kernels:
-                                        sorted_model_feats.insert(i, tensor)
+                                    j_num_conv_kernels = sorted_model_feats[j].shape[1]
+                                    if num_conv_kernels <= j_num_conv_kernels:
+                                        sorted_model_feats.insert(j, tensor)
                                         broke_out = True
                                         break
                                 if not broke_out:
