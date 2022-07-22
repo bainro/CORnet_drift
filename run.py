@@ -215,8 +215,7 @@ def train_movie_test(num_epochs=10,
                         targets = targets.cuda(non_blocking=True)
                     output = model(x)     
                     # hardcoded time_step to last, should always be 0 for Z?
-                    model_feats.append(_model_feats[-1])
-                    model_feats = np.concatenate(model_feats)
+                    model_feats = np.concatenate(_model_feats[-1])
                     loss = trainer.loss(output, targets)
                     trainer.optimizer.zero_grad()
                     loss.backward()
