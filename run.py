@@ -263,7 +263,7 @@ def train_movie_test(num_epochs=10,
                         trainer.optimizer.step()
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
-                    mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
+                    mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch
                     # to avoid OOM issues!
                     for handle in hook_handles:
                         handle.remove()
@@ -275,7 +275,7 @@ def train_movie_test(num_epochs=10,
                     # reset since just saved
                     model_feats = None
 
-    print("\n\n", "train_movie_test() done!!!", "\n\n")
+    print("\ntrain_movie_test() done!!!\n")
         
         
 class CIFAR100Train(object):
