@@ -232,7 +232,7 @@ def train_movie_test(num_epochs=10,
                                 sorted_model_feats.append(tensor)
                             else:
                                 for i in range(len(sorted_model_feats)):
-                                    num_conv_kernels = t.shape[1]
+                                    num_conv_kernels = tensor.shape[1]
                                     i_num_conv_kernels = sorted_model_feats[i].shape[1]
                                     if num_conv_kernels <= i_num_conv_kernels:
                                         break
