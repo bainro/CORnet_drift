@@ -229,7 +229,7 @@ def train_movie_test(num_epochs=10,
                         for tensor in _model_feats:
                             # find idx into sorted_model_feats that tensor belongs
                             if len(sorted_model_feats) == 0:
-                                sorted_model_feats[0] = tensor
+                                sorted_model_feats.append(tensor)
                             else:
                                 for i in range(len(sorted_model_feats)):
                                     num_conv_kernels = t.shape[1]
