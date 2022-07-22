@@ -204,13 +204,6 @@ def train_movie_test(num_epochs=10,
                     # print(output.shape)
                     # print(output.sum())
                     _model_feats.append(output)
-
-                hook_handles = []
-                # grab the output of each layer's non-linearity (ie ReLU)
-                for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
-                  model_layer = getattr(getattr(model.module, layer), sublayer)
-                  hook_handle = model_layer.register_forward_hook(_store_feats)
-                  hook_handles.append(hook_handle)
                   
                 def pairwise(iterable):
                     "s -> (s0, s1), (s2, s3), (s4, s5), ..."
@@ -218,6 +211,12 @@ def train_movie_test(num_epochs=10,
                     return zip(a, a)
    
                 for repeat in range(num_movies):
+                    hook_handles = []
+                    # grab the output of each layer's non-linearity (ie ReLU)
+                    for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
+                        model_layer = getattr(getattr(model.module, layer), sublayer)
+                        hook_handle = model_layer.register_forward_hook(_store_feats)
+                        hook_handles.append(hook_handle)
                     for (x, targets) in validator.movie_loader:
                         _model_feats = []
                         bs_flats = None
@@ -247,17 +246,16 @@ def train_movie_test(num_epochs=10,
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
                     mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
-                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
+                    # to avoid OOM issues!
+                    for handle in hook_handles:
+                        handle.remove()
+                    """ evaluate test set accuracy without learning """
+                    test_acc = validator()["top1"]
+                    print(f"test accuracy: {test_acc * 100:.1f}%")
+                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_{test_acc}"), model_feats)
                     print(f"model_feats.shape: {model_feats.shape}")
-                
-                for handle in hook_handles:
-                    handle.remove()
-                
-                """ evaluate test set accuracy without learning """
-                test_acc = validator()["top1"]
-                print(f"test accuracy: {test_acc * 100:.1f}%")
-                ### Rename file after saving to avoid OOM issues :(
-                # os.rename # @TODO
+                    # reset since just saved
+                    model_feats = None
 
     print("\n\n", "train_movie_test() done!!!", "\n\n")
         
