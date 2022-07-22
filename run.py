@@ -257,6 +257,8 @@ def train_movie_test(num_epochs=10,
                     print("SLEEPING! check the memory usage at this point via bash/top")
                     sleep(30)
                     model_feats = None
+                    # should be redundant, but just checking why validator() is causing OOM
+                    model.eval()
                     """ evaluate test set accuracy without learning """
                     test_acc = validator()["top1"]
                     print(f"test accuracy: {test_acc * 100:.1f}%")
