@@ -244,22 +244,18 @@ def train_movie_test(num_epochs=10,
                         trainer.optimizer.zero_grad()
                         loss.backward()
                         trainer.optimizer.step()
-
+                    # save output file for each movie repeat
+                    mov_r = (num_movies * epoch) + repeat + 1
+                    np.save(os.path.join(FLAGS.output_path, f"movie_repeat_{mov_r}"), model_feats)
+                    print(f"model_feats.shape: {model_feats.shape}")
+                    model_feats = None
+                
                 for handle in hook_handles:
                     handle.remove()
-                    
-                # @TODO immediately remove! Debugging only
-                np.save(os.path.join(FLAGS.output_path, "samples"), model_feats)
-                print(f"model_feats.shape: {model_feats.shape}");exit()
                 
                 """ evaluate test set accuracy without learning """
                 test_acc = validator()["top1"]
                 print(f"test accuracy: {test_acc * 100:.1f}%\nnot saved correctly yet!!")
-    
-    """ after num_epochs of training output a pandas dataframe """
-    
-    # will ultimately be a pandas dataframe, but using this since already a np array
-    np.save(os.path.join(FLAGS.output_path, "samples"), model_feats)
 
     print("\n\n", "train_movie_test() done!!!", "\n\n")
         
@@ -329,9 +325,9 @@ class CIFAR100Val(object):
             self.loss = self.loss.cuda()
 
     def data(self, movie):
-        # split test (10k) into test (8k) & movie (2k)
+        # split test (10k) into test (9.8k) & movie (0.2k)
         shuffle = True
-        movie_size = 0.2 if movie else 0.
+        movie_size = 0.02 if movie else 0.
         random_seed = 42
         data_dir = "./cifar100"
 
