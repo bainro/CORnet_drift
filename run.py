@@ -226,7 +226,6 @@ def train_movie_test(num_epochs=10,
                         output = model(x)     
                         # THIS IS NOT GENERAL! Specific to training on 2 GPUs
                         for tensor_gpu1, tensor_gpu2 in pairwise(_model_feats):
-                            # print(f"tensor_gpu1.shape: {tensor_gpu1.shape}")
                             # (batchsize, C * W * H)
                             bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
@@ -244,18 +243,18 @@ def train_movie_test(num_epochs=10,
                         trainer.optimizer.zero_grad()
                         loss.backward()
                         trainer.optimizer.step()
-                    # save output file for each movie repeat
-                    mov_r = (num_movies * epoch) + repeat + 1
-                    np.save(os.path.join(FLAGS.output_path, f"movie_repeat_{mov_r}"), model_feats)
+                    """ evaluate test set accuracy without learning """
+                    test_acc = validator()["top1"]
+                    print(f"test accuracy: {test_acc * 100:.1f}%")
+                    """ save output file for each movie repeat """
+                    num_tenths_this_epoch = i // a_tenth
+                    mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
+                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_{test_acc}"), model_feats)
                     print(f"model_feats.shape: {model_feats.shape}")
                     model_feats = None
                 
                 for handle in hook_handles:
                     handle.remove()
-                
-                """ evaluate test set accuracy without learning """
-                test_acc = validator()["top1"]
-                print(f"test accuracy: {test_acc * 100:.1f}%\nnot saved correctly yet!!")
 
     print("\n\n", "train_movie_test() done!!!", "\n\n")
         
