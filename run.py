@@ -201,7 +201,7 @@ def train_movie_test(num_epochs=10,
                     # An ugly but effective way of accessing intermediate model features
                     output = output.detach().cpu().numpy()
                     print(output.shape)
-                    print(output); exit()
+                    print(output.sum()) 
                     _model_feats.append(np.reshape(output, (len(output), -1)))
 
                 hook_handles = []
@@ -224,6 +224,7 @@ def train_movie_test(num_epochs=10,
                         loss.backward()
                         trainer.optimizer.step()
 
+                exit()
                 for handle in hook_handles:
                     handle.remove()
                 
