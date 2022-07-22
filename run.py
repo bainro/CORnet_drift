@@ -231,7 +231,6 @@ def train_movie_test(num_epochs=10,
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
                             bs_flat = np.vstack((bs_flat_1, bs_flat_2))
-                        """
                             if type(bs_flats) == type(None):
                                 bs_flats = bs_flat
                             else:
@@ -241,7 +240,6 @@ def train_movie_test(num_epochs=10,
                             model_feats = bs_flats
                         else:
                             model_feats = np.vstack((model_feats, bs_flats))
-                        """
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
                         loss.backward()
@@ -249,23 +247,17 @@ def train_movie_test(num_epochs=10,
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
                     mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
-                    # np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
-                    # print(f"model_feats.shape: {model_feats.shape}")
-                    del model_feats # hopefully freeing up memory quick enought for validator() below
-                    # last ditch effort for garbage collection to get its shit together
-                    from time import sleep
-                    print("SLEEPING! check the memory usage at this point via bash/top")
-                    sleep(10)
-                    model_feats = None
-                    # should be redundant, but just checking why validator() is causing OOM
+                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
+                    print(f"model_feats.shape: {model_feats.shape}")
+                
+                for handle in hook_handles:
+                    handle.remove()
+                
                 """ evaluate test set accuracy without learning """
                 test_acc = validator()["top1"]
                 print(f"test accuracy: {test_acc * 100:.1f}%")
                 ### Rename file after saving to avoid OOM issues :(
                 # os.rename # @TODO
-                
-                for handle in hook_handles:
-                    handle.remove()
 
     print("\n\n", "train_movie_test() done!!!", "\n\n")
         
