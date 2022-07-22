@@ -197,12 +197,13 @@ def train_movie_test(num_epochs=10,
                 
                 # layers (choose from: V1, V2, V4, IT, decoder)
                 # sublayer (e.g., output, conv1, avgpool)
-                def _store_feats(layer, inp, output):
+                def _store_feats(sublayer, inp, output):
                     # An ugly but effective way of accessing intermediate model features
                     output = output.detach().cpu().numpy()
-                    print(f"layer: {layer}")
+                    print(f"sublayer: {sublayer}")
                     print(output.shape)
                     print(output.sum(), "\n") 
+                    ### @TODO don't flatten since these are batches!
                     _model_feats.append(np.reshape(output, (len(output), -1)))
 
                 hook_handles = []
@@ -218,8 +219,8 @@ def train_movie_test(num_epochs=10,
                         if FLAGS.ngpus > 0:
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
-                        # print(f"_model_feats len: {len(_model_feats)}");print(f"_model_feats: {_model_feats}");exit()
-                        # hardcoded time_step to last, should always be 0 for Z?
+                        ### @TODO replace with pandas dataframe construction.
+                        # This line currently blows up because of mismatched shapes
                         model_feats = np.concatenate(_model_feats)
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
