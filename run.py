@@ -243,15 +243,17 @@ def train_movie_test(num_epochs=10,
                         trainer.optimizer.zero_grad()
                         loss.backward()
                         trainer.optimizer.step()
-                    """ evaluate test set accuracy without learning """
-                    test_acc = validator()["top1"]
-                    print(f"test accuracy: {test_acc * 100:.1f}%")
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
                     mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch + 1
-                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_{test_acc}"), model_feats)
+                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch}_test_"), model_feats)
                     print(f"model_feats.shape: {model_feats.shape}")
                     model_feats = None
+                    """ evaluate test set accuracy without learning """
+                    test_acc = validator()["top1"]
+                    print(f"test accuracy: {test_acc * 100:.1f}%")
+                    ### Rename file after saving to avoid OOM issues :(
+                    # os.rename # @TODO
                 
                 for handle in hook_handles:
                     handle.remove()
