@@ -214,15 +214,20 @@ def train_movie_test(num_epochs=10,
    
                 for repeat in range(num_movies):
                     for (x, targets) in validator.movie_loader:
-                        _model_feats = []
+                        _model_feats, bs_flats = [], []
                         if FLAGS.ngpus > 0:
                             targets = targets.cuda(non_blocking=True)
                         output = model(x)     
-                        ### @TODO replace with pandas dataframe construction.
-                        for tensor in _model_feats:
-                            print(f"tensor.shape: {tensor.shape}")
-                        # This line currently blows up because of mismatched shapes
-                        model_feats = np.concatenate(_model_feats)
+                        # THIS IS NOT GENERAL! Specific to training on 2 GPUs
+                        for tensor_gpu1, tensor_gpu2 in pairwise(_model_feats):
+                            # print(f"tensor_gpu1.shape: {tensor_gpu1.shape}")
+                            # (batchsize, C * W * H)
+                            bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
+                            bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
+                            # (2 * batchsize, C * W * H)
+                            bs_flat = np.vstack((bs_flat_1, bs_flat_2))
+                            bs_flats = np.hstack((bs_flats, bs_flat))
+                        model_feats = np.vstack((model_feats, bs_flats))
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
                         loss.backward()
