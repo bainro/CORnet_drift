@@ -236,7 +236,7 @@ def train_movie_test(num_epochs=10,
                                 bs_flats = bs_flat
                             else:
                                 bs_flats = np.hstack((bs_flats, bs_flat))
-                        if type(bs_flats) == type(None):
+                        if type(model_feats) == type(None):
                             model_feats = bs_flats
                         else:
                             model_feats = np.vstack((model_feats, bs_flats))
