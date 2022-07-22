@@ -225,7 +225,6 @@ def train_movie_test(num_epochs=10,
                         loss.backward()
                         trainer.optimizer.step()
 
-                exit()
                 for handle in hook_handles:
                     handle.remove()
                 
