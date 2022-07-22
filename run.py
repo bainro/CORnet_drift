@@ -211,6 +211,11 @@ def train_movie_test(num_epochs=10,
                   model_layer = getattr(getattr(model.module, layer), sublayer)
                   hook_handle = model_layer.register_forward_hook(_store_feats)
                   hook_handles.append(hook_handle)
+                  
+                def pairwise(iterable):
+                    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+                    a = iter(iterable)
+                    return zip(a, a)
    
                 for repeat in range(num_movies):
                     for (x, targets) in validator.movie_loader:
