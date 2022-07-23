@@ -244,8 +244,8 @@ def train_movie_test(num_epochs=10,
                             bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
-                            _tmp = np.array([])
-                            bs_flat = np.append(_tmp, np.vstack((bs_flat_1, bs_flat_2)))
+                            _tmp = np.array([np.vstack((bs_flat_1, bs_flat_2))])
+                            # bs_flat = np.append(_tmp, np.vstack((bs_flat_1, bs_flat_2)))
                             print(f"bs_flat.shape: {bs_flat.shape}");exit()
                             if type(bs_flats) == type(None):
                                 bs_flats = bs_flat
