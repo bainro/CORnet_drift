@@ -198,8 +198,11 @@ def train_movie_test(num_epochs=10,
                 # layers (choose from: V1, V2, V4, IT, decoder)
                 # sublayer (e.g., output, conv1, avgpool)
                 def _store_feats(sublayer, inp, output):
-                    # way of accessing intermediate model features
+                    # An ugly but effective way of accessing intermediate model features
                     output = output.detach().cpu().numpy()
+                    # print(f"sublayer: {sublayer}")
+                    # print(output.shape)
+                    # print(output.sum())
                     _model_feats.append(output)
                   
                 def pairwise(iterable):
@@ -239,24 +242,20 @@ def train_movie_test(num_epochs=10,
                                 if not broke_out:
                                     sorted_model_feats.append(tensor)
                             
-                        for k, (tensor_gpu1, tensor_gpu2) in enumerate(pairwise(sorted_model_feats)):
+                        for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
                             # (batchsize, C * W * H)
                             bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
                             bs_flat = np.vstack((bs_flat_1, bs_flat_2))
                             if type(bs_flats) == type(None):
-                                # sampling from 4 layers
-                                bs_flats = np.zeros((bs_flat.shape[0], 4), dtype=object)
-                            bs_flats[:, k] = bs_flat
-                            
-                        print(f"bs_flats.shape: {bs_flats.shape}");exit()
+                                bs_flats = bs_flat
+                            else:
+                                bs_flats = np.hstack((bs_flats, bs_flat))
                         
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
                         else:
-                            print(f"model_feats.shape: {model_feats.shape}")
-                            print(f"bs_flats.shape: {bs_flats.shape}")
                             model_feats = np.vstack((model_feats, bs_flats))
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
