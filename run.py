@@ -239,18 +239,19 @@ def train_movie_test(num_epochs=10,
                                 if not broke_out:
                                     sorted_model_feats.append(tensor)
                             
-                        for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
+                        for k, (tensor_gpu1, tensor_gpu2) in enumerate(pairwise(sorted_model_feats)):
                             # (batchsize, C * W * H)
                             bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
-                            _tmp = np.array([np.vstack((bs_flat_1, bs_flat_2))])
-                            # bs_flat = np.append(_tmp, np.vstack((bs_flat_1, bs_flat_2)))
-                            print(f"_tmp.shape: {_tmp.shape}");exit()
+                            bs_flat = np.vstack((bs_flat_1, bs_flat_2))
+                            # print(f"_tmp.shape: {_tmp.shape}");exit()
                             if type(bs_flats) == type(None):
-                                bs_flats = bs_flat
-                            else:
-                                bs_flats = np.hstack((bs_flats, bs_flat))
+                                # sampling from 4 layers
+                                bs_flats = np.zeros((bs_flat.shape[0], 4), dtype=object)
+                            bs_flats[k] = bs_flat
+                            
+                        print(f"bs_flats.shape: {bs_flats.shape}");exit()
                         
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
