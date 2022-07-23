@@ -263,7 +263,7 @@ def train_movie_test(num_epochs=1,
                         trainer.optimizer.step()
                     """ save output file for each movie repeat """
                     num_tenths_this_epoch = i // a_tenth
-                    mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch
+                    mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch * repeat + num_tenths_this_epoch
                     # to avoid OOM issues!
                     for handle in hook_handles:
                         handle.remove()
