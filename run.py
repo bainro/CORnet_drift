@@ -156,7 +156,7 @@ def train(restore_path=None,  # useful when you want to restart training
         
 
 def train_movie_test(num_epochs=1, 
-                     num_movies=10, # how many times to sample from the movie split
+                     num_movies=30, # how many times to sample from the movie split
                      restore_path=None): # where to load the pretrained model from
     """
     Train, movie, test loop until num_epochs of train split has been trained on.
@@ -245,8 +245,8 @@ def train_movie_test(num_epochs=1,
                             # grabbing the neurons that produce the middle 4x4 channel output
                             # Uses 64x storage with CIFAR. The neuropixels didn't record whole areas either.
                             # HARDCODED for CIFAR100 & CORNet-Z
-                            tensor_gpu1 = tensor_gpu1[:,:,14:17,14:17]
-                            print(f"tensor_gpu1.shape: {tensor_gpu1.shape}");exit()
+                            tensor_gpu1 = tensor_gpu1[:,:,14:18,14:18]
+                            tensor_gpu2 = tensor_gpu2[:,:,14:18,14:18]
                             # (batchsize, C * W * H)
                             bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
