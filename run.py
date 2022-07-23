@@ -193,8 +193,20 @@ def train_movie_test(num_epochs=1,
     # gets saved to a pandas dataframe
     model_feats = None
 
-    """ learn on train set for 1 epoch. """
+    """ few warm-up epochs since old momentum will not match """
+    for epoch in range(2):
+        for i, (x, targets) in enumerate(trainer.data_loader):
+            model.train()
+            if FLAGS.ngpus > 0:
+                targets = targets.cuda(non_blocking=True)
+            output = model(x)
+            loss = trainer.loss(output, targets)
+            trainer.optimizer.zero_grad()
+            loss.backward()
+            trainer.optimizer.step()
+    
     for epoch in range(0, num_epochs):
+        """ learn on train set for 1 epoch. """
         for i, (x, targets) in enumerate(trainer.data_loader):
             model.train()
             if FLAGS.ngpus > 0:
