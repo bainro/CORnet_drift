@@ -171,7 +171,8 @@ def train_movie_test(num_epochs=1,
     ckpt_data = torch.load(restore_path)
     model.load_state_dict(ckpt_data['state_dict'])
     # Goldilock's LR = 1e-3 (from results.pkl) not too small nor too large
-    ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.001
+    # Had to cut in half to keep test acc rather stable across 30 movie repeats
+    ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.0005
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
     
     a_tenth = len(trainer.data_loader) // 10
