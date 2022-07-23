@@ -163,6 +163,19 @@ def train_movie_test(num_epochs=1,
     Sample from each CORnet layer every 1/10th training epoch using movie split.
     Then evaluate the model on test split to see if behavior changes over time.
     """
+    
+    # layers (choose from: V1, V2, V4, IT, decoder)
+    # sublayer (e.g., output, conv1, avgpool)
+    def _store_feats(sublayer, inp, output):
+        # An ugly but effective way of accessing intermediate model features
+        output = output.detach().cpu().numpy()
+        _model_feats.append(output)
+
+    def pairwise(iterable):
+        "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+        a = iter(iterable)
+        return zip(a, a)
+    
     model = get_model()
     trainer = CIFAR100Train(model)
     validator = CIFAR100Val(model, movie=True)
@@ -175,16 +188,15 @@ def train_movie_test(num_epochs=1,
     ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.0005
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
     
-    a_tenth = len(trainer.data_loader) // 10
+    len_of_epoch = len(trainer.data_loader)
     # counter for each movie presentation
     mov_r = 0
     # holds all samples from the model's layers when running on movie
     # gets saved to a pandas dataframe
     model_feats = None
 
-    """ learn on train set for 1/10th of an epoch. """
+    """ learn on train set for 1 epoch. """
     for epoch in range(0, num_epochs):
-        # only train on 1/10th & start again where left off
         for i, (x, targets) in enumerate(trainer.data_loader):
             model.train()
             if FLAGS.ngpus > 0:
@@ -195,89 +207,77 @@ def train_movie_test(num_epochs=1,
             loss.backward()
             trainer.optimizer.step()
             
-            if i % a_tenth == 0 and i != 0:
-                """ train on movie for (10 repeats or just once) while sampling layers' neurons """
-                
-                # layers (choose from: V1, V2, V4, IT, decoder)
-                # sublayer (e.g., output, conv1, avgpool)
-                def _store_feats(sublayer, inp, output):
-                    # An ugly but effective way of accessing intermediate model features
-                    output = output.detach().cpu().numpy()
-                    _model_feats.append(output)
-                  
-                def pairwise(iterable):
-                    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
-                    a = iter(iterable)
-                    return zip(a, a)
-   
-                for repeat in range(num_movies):
-                    hook_handles = []
-                    # grab the output of each layer's non-linearity (ie ReLU)
-                    for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
-                        model_layer = getattr(getattr(model.module, layer), sublayer)
-                        hook_handle = model_layer.register_forward_hook(_store_feats)
-                        hook_handles.append(hook_handle)
-                    for (x, targets) in validator.movie_loader:
-                        _model_feats = []
-                        bs_flats = None
-                        if FLAGS.ngpus > 0:
-                            targets = targets.cuda(non_blocking=True)
-                        output = model(x)     
-                        # THIS IS NOT GENERAL! Specific to training on 2 GPUs
-                        sorted_model_feats = []
-                        # hooks are async & can return in mixed order so must sort
-                        for tensor in _model_feats:
-                            # find idx into sorted_model_feats that tensor belongs
-                            if len(sorted_model_feats) == 0:
-                                sorted_model_feats.append(tensor)
-                            else:
-                                broke_out = False
-                                for j in range(len(sorted_model_feats)):
-                                    num_conv_kernels = tensor.shape[1]
-                                    j_num_conv_kernels = sorted_model_feats[j].shape[1]
-                                    if num_conv_kernels <= j_num_conv_kernels:
-                                        sorted_model_feats.insert(j, tensor)
-                                        broke_out = True
-                                        break
-                                if not broke_out:
-                                    sorted_model_feats.append(tensor)
-                            
-                        for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
-                            # grabbing the neurons that produce the middle 4x4 channel output
-                            # Uses 64x storage with CIFAR. The neuropixels didn't record whole areas either.
-                            # HARDCODED for CIFAR100 & CORNet-Z
-                            tensor_gpu1 = tensor_gpu1[:,:,14:18,14:18]
-                            tensor_gpu2 = tensor_gpu2[:,:,14:18,14:18]
-                            # (batchsize, C * W * H)
-                            bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
-                            bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
-                            # (2 * batchsize, C * W * H)
-                            bs_flat = np.vstack((bs_flat_1, bs_flat_2))
-                            if type(bs_flats) == type(None):
-                                bs_flats = bs_flat
-                            else:
-                                bs_flats = np.hstack((bs_flats, bs_flat))
-                        
-                        if type(model_feats) == type(None):
-                            model_feats = bs_flats
-                        else:
-                            model_feats = np.vstack((model_feats, bs_flats))
-                        loss = trainer.loss(output, targets)
-                        trainer.optimizer.zero_grad()
-                        loss.backward()
-                        trainer.optimizer.step()
-                    """ save output file for each movie repeat """
-                    mov_r += 1
-                    # to avoid OOM issues!
-                    for handle in hook_handles:
-                        handle.remove()
-                    """ evaluate test set accuracy without learning """
-                    test_acc = validator()["top1"]
-                    print(f"test accuracy: {test_acc * 100:.1f}%")
-                    np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch+1}_test_{test_acc * 100:.1f}"), model_feats)
-                    print(f"model_feats.shape: {model_feats.shape}")
-                    # reset since just saved
-                    model_feats = None
+        """ train on movie(s) while sampling layers' neurons """
+        for repeat in range(num_movies):
+            # just in case, might be redundant
+            model.train()
+            hook_handles = []
+            # grab the output of each layer's non-linearity (ie ReLU)
+            for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
+                model_layer = getattr(getattr(model.module, layer), sublayer)
+                hook_handle = model_layer.register_forward_hook(_store_feats)
+                hook_handles.append(hook_handle)
+            for (x, targets) in validator.movie_loader:
+                _model_feats = []
+                bs_flats = None
+                if FLAGS.ngpus > 0:
+                    targets = targets.cuda(non_blocking=True)
+                output = model(x)     
+                # THIS IS NOT GENERAL! Specific to training on 2 GPUs
+                sorted_model_feats = []
+                # hooks are async & can return in mixed order so must sort
+                for tensor in _model_feats:
+                    # find idx into sorted_model_feats that tensor belongs
+                    if len(sorted_model_feats) == 0:
+                        sorted_model_feats.append(tensor)
+                    else:
+                        broke_out = False
+                        for j in range(len(sorted_model_feats)):
+                            num_conv_kernels = tensor.shape[1]
+                            j_num_conv_kernels = sorted_model_feats[j].shape[1]
+                            if num_conv_kernels <= j_num_conv_kernels:
+                                sorted_model_feats.insert(j, tensor)
+                                broke_out = True
+                                break
+                        if not broke_out:
+                            sorted_model_feats.append(tensor)
+
+                for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
+                    # grabbing the neurons that produce the middle 4x4 channel output
+                    # Uses 64x storage with CIFAR. The neuropixels didn't record whole areas either.
+                    # HARDCODED for CIFAR100 & CORNet-Z
+                    tensor_gpu1 = tensor_gpu1[:,:,14:18,14:18]
+                    tensor_gpu2 = tensor_gpu2[:,:,14:18,14:18]
+                    # (batchsize, C * W * H)
+                    bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
+                    bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
+                    # (2 * batchsize, C * W * H)
+                    bs_flat = np.vstack((bs_flat_1, bs_flat_2))
+                    if type(bs_flats) == type(None):
+                        bs_flats = bs_flat
+                    else:
+                        bs_flats = np.hstack((bs_flats, bs_flat))
+
+                if type(model_feats) == type(None):
+                    model_feats = bs_flats
+                else:
+                    model_feats = np.vstack((model_feats, bs_flats))
+                loss = trainer.loss(output, targets)
+                trainer.optimizer.zero_grad()
+                loss.backward()
+                trainer.optimizer.step()
+            """ save output file for each movie repeat """
+            mov_r += 1
+            # to avoid OOM issues!
+            for handle in hook_handles:
+                handle.remove()
+            """ evaluate test set accuracy without learning """
+            test_acc = validator()["top1"]
+            print(f"test accuracy: {test_acc * 100:.1f}%")
+            np.save(os.path.join(FLAGS.output_path, f"movie_{mov_r}_e_{epoch+1}_test_{test_acc * 100:.1f}"), model_feats)
+            print(f"model_feats.shape: {model_feats.shape}")
+            # reset since just saved
+            model_feats = None
 
     print("\ntrain_movie_test() done!!!\n")
         
