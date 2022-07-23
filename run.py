@@ -155,8 +155,8 @@ def train(restore_path=None,  # useful when you want to restart training
             data_load_start = time.time()
         
 
-def train_movie_test(num_epochs=10, 
-                     num_movies=1, # how many times to sample from the movie split
+def train_movie_test(num_epochs=1, 
+                     num_movies=10, # how many times to sample from the movie split
                      restore_path=None): # where to load the pretrained model from
     """
     Train, movie, test loop until num_epochs of train split has been trained on.
