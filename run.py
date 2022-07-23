@@ -249,7 +249,7 @@ def train_movie_test(num_epochs=10,
                                 bs_flats = bs_flat
                             else:
                                 # bs_flats = np.hstack((bs_flats, bs_flat))
-                                bs_flats = np.concatenate((bs_flats, bs_flat), axis=0)
+                                bs_flats = np.concatenate((bs_flats, bs_flat), axis=1)
                         
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
