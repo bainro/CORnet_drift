@@ -246,7 +246,7 @@ def train_movie_test(num_epochs=10,
                             # (2 * batchsize, C * W * H)
                             _tmp = np.array([np.vstack((bs_flat_1, bs_flat_2))])
                             # bs_flat = np.append(_tmp, np.vstack((bs_flat_1, bs_flat_2)))
-                            print(f"bs_flat.shape: {bs_flat.shape}");exit()
+                            print(f"_tmp.shape: {_tmp.shape}");exit()
                             if type(bs_flats) == type(None):
                                 bs_flats = bs_flat
                             else:
