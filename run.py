@@ -254,6 +254,8 @@ def train_movie_test(num_epochs=10,
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
                         else:
+                            print(f"model_feats.shape: {model_feats.shape}")
+                            print(f"bs_flats.shape: {bs_flats.shape}")
                             model_feats = np.vstack((model_feats, bs_flats))
                         loss = trainer.loss(output, targets)
                         trainer.optimizer.zero_grad()
