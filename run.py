@@ -175,6 +175,8 @@ def train_movie_test(num_epochs=1,
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
     
     a_tenth = len(trainer.data_loader) // 10
+    # counter for each movie presentation
+    mov_r = 0
     # holds all samples from the model's layers when running on movie
     # gets saved to a pandas dataframe
     model_feats = None
@@ -262,8 +264,7 @@ def train_movie_test(num_epochs=1,
                         loss.backward()
                         trainer.optimizer.step()
                     """ save output file for each movie repeat """
-                    num_tenths_this_epoch = i // a_tenth
-                    mov_r = (num_movies * epoch * 10) + repeat + num_tenths_this_epoch * repeat + num_tenths_this_epoch
+                    mov_r += 1
                     # to avoid OOM issues!
                     for handle in hook_handles:
                         handle.remove()
