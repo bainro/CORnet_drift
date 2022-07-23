@@ -245,11 +245,10 @@ def train_movie_test(num_epochs=10,
                             bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
                             # (2 * batchsize, C * W * H)
                             bs_flat = np.vstack((bs_flat_1, bs_flat_2))
-                            # print(f"_tmp.shape: {_tmp.shape}");exit()
                             if type(bs_flats) == type(None):
                                 # sampling from 4 layers
                                 bs_flats = np.zeros((bs_flat.shape[0], 4), dtype=object)
-                            bs_flats[k] = bs_flat
+                            bs_flats[:, k] = bs_flat
                             
                         print(f"bs_flats.shape: {bs_flats.shape}");exit()
                         
