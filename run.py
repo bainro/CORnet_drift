@@ -198,11 +198,8 @@ def train_movie_test(num_epochs=10,
                 # layers (choose from: V1, V2, V4, IT, decoder)
                 # sublayer (e.g., output, conv1, avgpool)
                 def _store_feats(sublayer, inp, output):
-                    # An ugly but effective way of accessing intermediate model features
+                    # way of accessing intermediate model features
                     output = output.detach().cpu().numpy()
-                    # print(f"sublayer: {sublayer}")
-                    # print(output.shape)
-                    # print(output.sum())
                     _model_feats.append(output)
                   
                 def pairwise(iterable):
@@ -251,7 +248,8 @@ def train_movie_test(num_epochs=10,
                             if type(bs_flats) == type(None):
                                 bs_flats = bs_flat
                             else:
-                                bs_flats = np.hstack((bs_flats, bs_flat))
+                                # bs_flats = np.hstack((bs_flats, bs_flat))
+                                bs_flats = np.concatenate((bs_flats, bs_flat), axis=0)
                         
                         if type(model_feats) == type(None):
                             model_feats = bs_flats
