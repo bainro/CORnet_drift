@@ -171,8 +171,7 @@ def train_movie_test(num_epochs=1,
     ckpt_data = torch.load(restore_path)
     model.load_state_dict(ckpt_data['state_dict'])
     # Goldilock's LR = 1e-3 (from results.pkl) not too small nor too large
-    # Had to cut in half since test acc became unstable with 30 repeated movies
-    ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.0005
+    ckpt_data['optimizer']['param_groups'][0]['lr'] = 0.001
     trainer.optimizer.load_state_dict(ckpt_data['optimizer'])
     
     a_tenth = len(trainer.data_loader) // 10
@@ -347,9 +346,9 @@ class CIFAR100Val(object):
             self.loss = self.loss.cuda()
 
     def data(self, movie):
-        # split test (10k) into test (9k) & movie (1k)
+        # split test (10k) into test (9.8k) & movie (0.2k)
         shuffle = True
-        movie_size = 0.1 if movie else 0.
+        movie_size = 0.02 if movie else 0.
         random_seed = 42
         data_dir = "./cifar100"
 
