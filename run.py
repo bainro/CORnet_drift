@@ -347,9 +347,10 @@ class CIFAR100Val(object):
             self.loss = self.loss.cuda()
 
     def data(self, movie):
-        # split test (10k) into test (9.8k) & movie (0.2k)
+        # split test (10k) into test (9610) & movie (390)
         shuffle = True
-        movie_size = 0.02 if movie else 0.
+        # bin into 30 seconds, so 13 FPS
+        movie_size = 390 if movie else 0.
         random_seed = 42
         data_dir = "./cifar100"
 
@@ -370,15 +371,13 @@ class CIFAR100Val(object):
             download=True, transform=transform,
         )
 
-        num_test = len(test_dataset)
         indices = list(range(num_test))
-        split = int(np.floor(movie_size * num_test))
 
         if shuffle:
             np.random.seed(random_seed)
             np.random.shuffle(indices)
 
-        test_idx, movie_idx = indices[split:], indices[:split]
+        test_idx, movie_idx = indices[movie_size:], indices[:movie_size]
         test_sampler = SubsetRandomSampler(test_idx)
         movie_sampler = SubsetRandomSampler(movie_idx)
 
