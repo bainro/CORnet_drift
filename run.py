@@ -371,6 +371,7 @@ class CIFAR100Val(object):
             download=True, transform=transform,
         )
 
+        num_test = len(test_dataset)
         indices = list(range(num_test))
 
         if shuffle:
