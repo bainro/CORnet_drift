@@ -290,7 +290,6 @@ def train_movie_test(num_epochs=1,
                 if type(model_feats) == type(None):
                     model_feats = bs_flats
                 else:
-                    print(model_feats.shape, bs_flats.shape)
                     model_feats = np.vstack((model_feats, bs_flats))
                 
             """ save output file for each movie repeat """
