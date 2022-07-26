@@ -28,6 +28,8 @@ parser.add_argument('-o', '--output_path', default=None,
                     help='path for storing ')
 parser.add_argument('--dropout', action='store_true',
                     help='whether to add dropout to all layers or not')
+parser.add_argument('--sample_train', action='store_true',
+                    help='whether to sample the model in train or eval/test mode')
 parser.add_argument('--model', choices=['Z', 'R', 'RT', 'S'], default='Z',
                     help='which model to train')
 parser.add_argument('--times', default=5, type=int,
@@ -171,6 +173,14 @@ def train_movie_test(num_epochs=1,
         output = output.detach().cpu().numpy()
         _model_feats.append(output)
 
+    hook_handles = []
+    def apply_hooks(model):
+        # grab the output of each layer's non-linearity (ie ReLU)
+        for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
+            model_layer = getattr(getattr(model.module, layer), sublayer)
+            hook_handle = model_layer.register_forward_hook(_store_feats)
+            hook_handles.append(hook_handle)
+        
     def pairwise(iterable):
         "s -> (s0, s1), (s2, s3), (s4, s5), ..."
         a = iter(iterable)
@@ -221,18 +231,25 @@ def train_movie_test(num_epochs=1,
         for repeat in range(num_movies):
             # just in case, might be redundant
             model.train()
-            hook_handles = []
-            # grab the output of each layer's non-linearity (ie ReLU)
-            for layer, sublayer in zip(["V1", "V2", "V4", "IT"], ["nonlin"] * 4):
-                model_layer = getattr(getattr(model.module, layer), sublayer)
-                hook_handle = model_layer.register_forward_hook(_store_feats)
-                hook_handles.append(hook_handle)
+            if FLAGS.sample_train:
+                apply_hooks(model)
             for (x, targets) in validator.movie_loader:
                 _model_feats = []
                 bs_flats = None
                 if FLAGS.ngpus > 0:
                     targets = targets.cuda(non_blocking=True)
                 output = model(x)     
+                loss = trainer.loss(output, targets)
+                trainer.optimizer.zero_grad()
+                loss.backward()
+                trainer.optimizer.step()
+                
+                # Train & test mode are different. Test has no dropout!
+                if not FLAGS.sample_train:
+                    apply_hooks(model)
+                    model.eval()
+                    output = model(x)    
+                
                 # THIS IS NOT GENERAL! Specific to training on 2 GPUs
                 sorted_model_feats = []
                 # hooks are async & can return in mixed order so must sort
@@ -272,10 +289,7 @@ def train_movie_test(num_epochs=1,
                     model_feats = bs_flats
                 else:
                     model_feats = np.vstack((model_feats, bs_flats))
-                loss = trainer.loss(output, targets)
-                trainer.optimizer.zero_grad()
-                loss.backward()
-                trainer.optimizer.step()
+                
             """ save output file for each movie repeat """
             mov_r += 1
             # to avoid OOM issues!
