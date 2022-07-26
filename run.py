@@ -248,7 +248,9 @@ def train_movie_test(num_epochs=1,
                 if FLAGS.sample_eval:
                     model.eval()
                     apply_hooks(model)
-                    output = model(x)    
+                    output = model(x)
+                    for handle in hook_handles:
+                        handle.remove()
                 
                 # THIS IS NOT GENERAL! Specific to training on 2 GPUs
                 sorted_model_feats = []
