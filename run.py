@@ -28,7 +28,7 @@ parser.add_argument('-o', '--output_path', default=None,
                     help='path for storing ')
 parser.add_argument('--dropout', action='store_true',
                     help='whether to add dropout to all layers or not')
-parser.add_argument('--sample_train', action='store_true',
+parser.add_argument('--sample_eval', action='store_true',
                     help='whether to sample the model in train or eval/test mode')
 parser.add_argument('--model', choices=['Z', 'R', 'RT', 'S'], default='Z',
                     help='which model to train')
@@ -231,7 +231,7 @@ def train_movie_test(num_epochs=1,
         for repeat in range(num_movies):
             # just in case, might be redundant
             model.train()
-            if FLAGS.sample_train:
+            if not FLAGS.sample_eval:
                 apply_hooks(model)
             for (x, targets) in validator.movie_loader:
                 _model_feats = []
@@ -245,7 +245,7 @@ def train_movie_test(num_epochs=1,
                 trainer.optimizer.step()
                 
                 # Train & test mode are different. Test has no dropout!
-                if not FLAGS.sample_train:
+                if FLAGS.sample_eval:
                     apply_hooks(model)
                     model.eval()
                     output = model(x)    
