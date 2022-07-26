@@ -246,8 +246,8 @@ def train_movie_test(num_epochs=1,
                 
                 # Train & test mode are different. Test has no dropout!
                 if FLAGS.sample_eval:
-                    apply_hooks(model)
                     model.eval()
+                    apply_hooks(model)
                     output = model(x)    
                 
                 # THIS IS NOT GENERAL! Specific to training on 2 GPUs
