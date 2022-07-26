@@ -222,10 +222,10 @@ def train_movie_test(num_epochs=1,
             if FLAGS.ngpus > 0:
                 targets = targets.cuda(non_blocking=True)
             output = model(x)
-#             loss = trainer.loss(output, targets)
-#             trainer.optimizer.zero_grad()
-#             loss.backward()
-#             trainer.optimizer.step()
+            loss = trainer.loss(output, targets)
+            trainer.optimizer.zero_grad()
+            loss.backward()
+            trainer.optimizer.step()
             
         """ train on movie(s) while sampling layers' neurons """
         for repeat in range(num_movies):
