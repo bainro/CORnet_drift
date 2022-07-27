@@ -393,6 +393,11 @@ class CIFAR100Val(object):
             root=data_dir, train=False,
             download=True, transform=transform,
         )
+        
+        movie_dataset = torchvision.datasets.CIFAR100(
+            root=data_dir, train=False,
+            download=True, transform=transform,
+        )
 
         num_test = len(test_dataset)
         indices = list(range(num_test))
@@ -403,7 +408,7 @@ class CIFAR100Val(object):
 
         test_idx, movie_idx = indices[movie_size:], indices[:movie_size]
         test_dataset = Subset(test_idx, test_dataset)
-        movie_dataset = Subset(movie_idx, test_dataset)
+        movie_dataset = Subset(movie_idx, movie_dataset)
 
         test_loader = torch.utils.data.DataLoader(
             test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
