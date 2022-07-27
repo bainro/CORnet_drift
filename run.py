@@ -374,44 +374,92 @@ class CIFAR100Val(object):
         data_dir = "./cifar100"
 
         transform = torchvision.transforms.Compose([
-            #torchvision.transforms.Resize(36),
-            #torchvision.transforms.CenterCrop(32),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
-
+              #torchvision.transforms.Resize(36),
+              #torchvision.transforms.CenterCrop(32),
+              torchvision.transforms.ToTensor(),
+              torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+          ])
+        
         test_dataset = torchvision.datasets.CIFAR100(
-            root=data_dir, train=False,
-            download=True, transform=transform,
-        )
+                root=data_dir, train=False,
+                download=True, transform=transform,
+            )
         
-        movie_dataset = torchvision.datasets.CIFAR100(
-            root=data_dir, train=False,
-            download=True, transform=transform,
-        )
-
         num_test = len(test_dataset)
-        indices = list(range(num_test))
-
-        if shuffle:
-            np.random.seed(random_seed)
-            np.random.shuffle(indices)
-
-        test_idx, movie_idx = indices[movie_size:], indices[:movie_size]
-        test_dataset = Subset(test_dataset, test_idx)
-        movie_dataset = Subset(movie_dataset, movie_idx)
-
-        test_loader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
-            num_workers=FLAGS.workers, pin_memory=True,
-        )
-        test_loader.num_images = len(test_idx)
         
-        movie_loader = torch.utils.data.DataLoader(
-            movie_dataset, batch_size=FLAGS.batch_size, shuffle=False,
-            num_workers=FLAGS.workers, pin_memory=True,
-        )
-        movie_loader.num_images = len(movie_idx)
+        if movie == "man":
+            test_loader = torch.utils.data.DataLoader(
+                test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
+                num_workers=FLAGS.workers, pin_memory=True,
+            )
+            test_loader.num_images = len(test_idx)
+
+            ### @TODO clean this up!
+            import os
+            from PIL import Image
+            from torch.utils.data import Dataset, DataLoader
+
+            class ManMovieDataset(Dataset):
+                def __init__(self, image_paths, transform=False):
+                    self.image_paths = image_paths
+                    self.transform = transform
+
+                def __len__(self):
+                    return len(self.image_paths)
+
+                def __getitem__(self, idx):
+                    image_filepath = self.image_paths[idx]
+                    image = Image.open(image_filepath)
+                    label = 46 # label for men in torchvision.CIFAR100
+                    if self.transform is not None:
+                        image = self.transform(image)
+
+                    return image, label
+
+            # hard coded for rob's dev notebook env!!!
+            load_dir = os.path.join("../man_movie")
+            image_filenames = []
+            for f in sorted(os.listdir(load_dir)):
+                # skip hidden files
+                if f[0] == ".": 
+                    continue
+                image_filenames.append(os.path.join(load_dir, f))
+                
+            man_movie_dataset = ManMovieDataset(image_filenames, transform)
+                
+            movie_loader = torch.utils.data.DataLoader(
+                man_movie_dataset, batch_size=FLAGS.batch_size, shuffle=False,
+                num_workers=FLAGS.workers, pin_memory=True,
+            )
+            movie_loader.num_images = len(man_movie_dataset)
+        else:
+
+            movie_dataset = torchvision.datasets.CIFAR100(
+                root=data_dir, train=False,
+                download=True, transform=transform,
+            )
+
+            indices = list(range(num_test))
+
+            if shuffle:
+                np.random.seed(random_seed)
+                np.random.shuffle(indices)
+
+            test_idx, movie_idx = indices[movie_size:], indices[:movie_size]
+            test_dataset = Subset(test_dataset, test_idx)
+            movie_dataset = Subset(movie_dataset, movie_idx)
+
+            test_loader = torch.utils.data.DataLoader(
+                test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
+                num_workers=FLAGS.workers, pin_memory=True,
+            )
+            test_loader.num_images = len(test_idx)
+
+            movie_loader = torch.utils.data.DataLoader(
+                movie_dataset, batch_size=FLAGS.batch_size, shuffle=False,
+                num_workers=FLAGS.workers, pin_memory=True,
+            )
+            movie_loader.num_images = len(movie_idx)
 
         return test_loader, movie_loader
 
