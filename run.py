@@ -422,7 +422,7 @@ class CIFAR100Val(object):
                     return image, label
 
             # hard coded for rob's dev notebook env!!!
-            load_dir = os.path.join("../man_movie")
+            load_dir = os.path.join("./man_movie")
             image_filenames = []
             for f in sorted(os.listdir(load_dir)):
                 # skip hidden files
