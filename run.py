@@ -274,6 +274,8 @@ def train_movie_test(num_epochs=1,
                             sorted_model_feats.append(tensor)
 
                 for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
+                    print(f"tensor_gpu1.shape: {tensor_gpu1.shape}")
+                    print(f"tensor_gpu2.shape: {tensor_gpu2.shape}")
                     # grabbing the neurons that produce the middle 4x4 channel output
                     # Uses 64x storage with CIFAR. The neuropixels didn't record whole areas either.
                     # HARDCODED for CIFAR100 & CORNet-Z
