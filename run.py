@@ -394,11 +394,6 @@ class CIFAR100Val(object):
             download=True, transform=transform,
         )
 
-        movie_dataset = torchvision.datasets.CIFAR100(
-            root=data_dir, train=False,
-            download=True, transform=transform,
-        )
-
         num_test = len(test_dataset)
         indices = list(range(num_test))
 
@@ -407,18 +402,18 @@ class CIFAR100Val(object):
             np.random.shuffle(indices)
 
         test_idx, movie_idx = indices[movie_size:], indices[:movie_size]
-        test_sampler = Subset(test_idx, test_dataset)
-        movie_sampler = Subset(movie_idx, test_dataset)
+        test_dataset = Subset(test_idx, test_dataset)
+        movie_dataset = Subset(movie_idx, test_dataset)
 
         test_loader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=FLAGS.batch_size, sampler=test_sampler,
-            shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
+            test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
+            num_workers=FLAGS.workers, pin_memory=True,
         )
         test_loader.num_images = len(test_idx)
         
         movie_loader = torch.utils.data.DataLoader(
-            movie_dataset, batch_size=FLAGS.batch_size, sampler=movie_sampler,
-            shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
+            movie_dataset, batch_size=FLAGS.batch_size, shuffle=False,
+            num_workers=FLAGS.workers, pin_memory=True,
         )
         movie_loader.num_images = len(movie_idx)
 
