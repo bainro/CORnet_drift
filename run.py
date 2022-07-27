@@ -8,7 +8,7 @@ import fire
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo
-from torch.utils.data.sampler import SubsetRandomSampler
+from torch.utils.data.sampler import Subset
 import torchvision
 
 import cornet
