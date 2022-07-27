@@ -235,7 +235,7 @@ def train_movie_test(num_epochs=1,
                 apply_hooks(model)
             for k, (x, targets) in enumerate(validator.movie_loader):
                 # debug code: ensuring same order of movie images (ie no shuffling)
-                if k == 0: print(targets)
+                # if k == 0: print(targets)
                 _model_feats = []
                 bs_flats = None
                 if FLAGS.ngpus > 0:
