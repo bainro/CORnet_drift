@@ -397,7 +397,7 @@ class CIFAR100Val(object):
                 test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
                 num_workers=FLAGS.workers, pin_memory=True,
             )
-            test_loader.num_images = len(test_idx)
+            test_loader.num_images = num_test
 
             ### @TODO clean this up!
             import os
