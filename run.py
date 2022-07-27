@@ -180,11 +180,6 @@ def train_movie_test(num_epochs=1,
             model_layer = getattr(getattr(model.module, layer), sublayer)
             hook_handle = model_layer.register_forward_hook(_store_feats)
             hook_handles.append(hook_handle)
-        
-    def pairwise(iterable):
-        "s -> (s0, s1), (s2, s3), (s4, s5), ..."
-        a = iter(iterable)
-        return zip(a, a)
     
     model = get_model()
     trainer = CIFAR100Train(model)
@@ -254,7 +249,7 @@ def train_movie_test(num_epochs=1,
                     for handle in hook_handles:
                         handle.remove()
                 
-                # THIS IS NOT GENERAL! Specific to training on 2 GPUs
+                # THIS IS NOT GENERAL! Specific to training on 1 GPU.
                 sorted_model_feats = []
                 # hooks are async & can return in mixed order so must sort
                 for tensor in _model_feats:
@@ -273,19 +268,13 @@ def train_movie_test(num_epochs=1,
                         if not broke_out:
                             sorted_model_feats.append(tensor)
 
-                for tensor_gpu1, tensor_gpu2 in pairwise(sorted_model_feats):
-                    print(f"tensor_gpu1.shape: {tensor_gpu1.shape}")
-                    print(f"tensor_gpu2.shape: {tensor_gpu2.shape}")
+                for tensor_gpu1 in sorted_model_feats:
                     # grabbing the neurons that produce the middle 4x4 channel output
                     # Uses 64x storage with CIFAR. The neuropixels didn't record whole areas either.
                     # HARDCODED for CIFAR100 & CORNet-Z
                     tensor_gpu1 = tensor_gpu1[:,:,14:18,14:18]
-                    tensor_gpu2 = tensor_gpu2[:,:,14:18,14:18]
                     # (batchsize, C * W * H)
                     bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
-                    bs_flat_2 = np.reshape(tensor_gpu2, (tensor_gpu2.shape[0], -1))
-                    # (2 * batchsize, C * W * H)
-                    bs_flat = np.vstack((bs_flat_1, bs_flat_2))
                     if type(bs_flats) == type(None):
                         bs_flats = bs_flat
                     else:
