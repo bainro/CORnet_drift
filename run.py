@@ -407,8 +407,8 @@ class CIFAR100Val(object):
             np.random.shuffle(indices)
 
         test_idx, movie_idx = indices[movie_size:], indices[:movie_size]
-        test_dataset = Subset(test_idx, test_dataset)
-        movie_dataset = Subset(movie_idx, movie_dataset)
+        test_dataset = Subset(test_dataset, test_idx)
+        movie_dataset = Subset(movie_dataset, movie_idx)
 
         test_loader = torch.utils.data.DataLoader(
             test_dataset, batch_size=FLAGS.batch_size, shuffle=False, 
