@@ -28,6 +28,8 @@ parser.add_argument('-o', '--output_path', default=None,
                     help='path for storing ')
 parser.add_argument('--dropout', action='store_true',
                     help='whether to add dropout to all layers or not')
+parser.add_argument('--man_movie', action='store_true',
+                    help='whether to use man movie or a bit of CIFAR100 test split as the movie.')
 parser.add_argument('--sample_eval', action='store_true',
                     help='whether to sample the model in train or eval/test mode')
 parser.add_argument('--model', choices=['Z', 'R', 'RT', 'S'], default='Z',
@@ -183,7 +185,10 @@ def train_movie_test(num_epochs=1,
     
     model = get_model()
     trainer = CIFAR100Train(model)
-    validator = CIFAR100Val(model, movie=True)
+    if FLAGS.man_movie:
+        validator = CIFAR100Val(model, movie="man")
+    else:
+        validator = CIFAR100Val(model, movie=True)
     
     assert restore_path is not None, "set restore_path"    
     ckpt_data = torch.load(restore_path)
