@@ -274,7 +274,7 @@ def train_movie_test(num_epochs=1,
                     # HARDCODED for CIFAR100 & CORNet-Z
                     tensor_gpu1 = tensor_gpu1[:,:,14:18,14:18]
                     # (batchsize, C * W * H)
-                    bs_flat_1 = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
+                    bs_flat = np.reshape(tensor_gpu1, (tensor_gpu1.shape[0], -1))
                     if type(bs_flats) == type(None):
                         bs_flats = bs_flat
                     else:
