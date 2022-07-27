@@ -233,7 +233,9 @@ def train_movie_test(num_epochs=1,
             model.train()
             if not FLAGS.sample_eval:
                 apply_hooks(model)
-            for (x, targets) in validator.movie_loader:
+            for k, (x, targets) in enumerate(validator.movie_loader):
+                # debug code: ensuring same order of movie images (ie no shuffling)
+                if k == 0: print(targets)
                 _model_feats = []
                 bs_flats = None
                 if FLAGS.ngpus > 0:
@@ -414,7 +416,6 @@ class CIFAR100Val(object):
         )
         test_loader.num_images = len(test_idx)
         
-        # Each forward pass recalc's dropout. Geometry did not use const mask across "movie" repeat
         movie_loader = torch.utils.data.DataLoader(
             movie_dataset, batch_size=FLAGS.batch_size, sampler=movie_sampler,
             shuffle=False, num_workers=FLAGS.workers, pin_memory=True,
