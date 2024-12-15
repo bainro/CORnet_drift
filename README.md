@@ -1,3 +1,6 @@
+Better forward hooks idea:
+Have dataloader pass unique data ID (e.g. name of image input file) along with X & Y tensors. Then these can be passed to specific model layers, making them accessible to forward hooks.
+E.g. the input here will probably (hopefully...) be a tuple: https://discuss.pytorch.org/t/how-can-l-load-my-best-model-as-a-feature-extractor-evaluator/17254/6
 
 # CORnet: Modeling the Neural Mechanisms of Core Object Recognition
 
